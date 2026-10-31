@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Challenge Board</title>
+<meta name="theme-color" content="#0D1014">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+[hidden]{display:none!important}
+:root{
+--bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
+--accent:#7C93FF; --accent2:#4ADE9A; --good:#4ADE9A; --warn:#F5A524;
+--display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+--body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow:hidden}
+.tv{height:100dvh;display:grid;grid-template-rows:auto 1fr auto;gap:2.2vh;padding:3.5vh 3.5vw}
+header{display:flex;justify-content:space-between;align-items:baseline}
+.brand{font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:max(1.8vh,14px)}
+.left{color:var(--muted);font-size:max(2vh,14px);font-variant-numeric:tabular-nums}
+.cols{display:grid;grid-template-columns:1.1fr 1fr;gap:4vw;min-height:0}
+.col{display:flex;flex-direction:column;min-width:0;min-height:0;gap:1.2vh}
+.hero{justify-content:center}
+.tag{margin-left:1vw;font-size:max(1.8vh,11px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.col+.col{border-left:1px solid var(--line);padding-left:4vw}
+.label{font-size:max(2.2vh,14px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.total{font-family:var(--display);font-weight:700;font-size:min(26vw,48vh);line-height:.85;font-variant-numeric:tabular-nums;margin:.4vh 0;white-space:nowrap}
+.sub{color:var(--muted);font-size:max(2.4vh,14px);font-variant-numeric:tabular-nums}
+.track{position:relative;height:2vh;border-radius:1vh;background:var(--line);margin-top:1.4vh}
+.fill{height:100%;width:0;border-radius:1vh;background:var(--accent);transition:width .8s ease}
+.pace{position:absolute;top:-.7vh;bottom:-.7vh;width:3px;background:var(--ink);opacity:.6;left:0}
+.pacetxt{margin-top:.8vh;font-size:max(2.3vh,14px);font-variant-numeric:tabular-nums}
+.pacetxt.ahead{color:var(--good)} .pacetxt.behind{color:var(--warn)}
+.extra{color:var(--muted);font-size:max(2vh,13px)}
+.rows{list-style:none;margin:1vh 0 0;padding:0;display:flex;flex-direction:column;gap:1.5vh;overflow:hidden}
+.row{display:grid;grid-template-columns:3vh 1fr auto auto;gap:.5vh 1vw;align-items:center}
+.pc{color:var(--muted);font-size:max(2.2vh,13px);font-variant-numeric:tabular-nums;min-width:4.2vh;text-align:right}
+.pc.atgoal{color:var(--good);font-weight:700}
+.rank{color:var(--muted);font-size:max(2.2vh,13px);font-variant-numeric:tabular-nums}
+.nm{font-weight:600;font-size:max(3vh,16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ct{font-family:var(--display);font-weight:700;font-size:max(4vh,20px);line-height:1;font-variant-numeric:tabular-nums}
+.split{grid-column:2 / 5;color:var(--muted);font-size:max(1.9vh,12px);font-variant-numeric:tabular-nums}
+.bar{grid-column:2 / 5;height:.9vh;border-radius:.45vh;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);opacity:.85;border-radius:.45vh;transition:width .8s ease}
+.empty{color:var(--muted);font-size:max(2.6vh,15px)}
+.more{color:var(--muted);font-size:max(2vh,13px)}
+footer{display:flex;justify-content:space-between;align-items:center;gap:3vw;border-top:1px solid var(--line);padding-top:1.8vh;min-height:13vh}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.8vh;min-width:0;flex:1}
+.feed li{font-size:max(2.5vh,14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed b{font-weight:700}
+.feed .ex{color:var(--muted);margin-left:.4vw}
+.feed .ago{color:var(--muted);margin-left:1vw;font-size:max(2vh,12px)}
+.join{display:flex;align-items:center;gap:1.4vw;flex:none}
+#qr{background:#fff;padding:.8vh;border-radius:1vh;line-height:0}
+#qr img,#qr canvas{display:block;width:10vh!important;height:10vh!important}
+.jt{font-size:max(2.2vh,13px);color:var(--muted);line-height:1.35}
+.jt b{display:block;color:var(--ink);font-size:max(2.5vh,14px)}
+.pop{position:fixed;inset:0;display:grid;place-items:center;background:rgba(13,16,20,.88);z-index:9}
+.pop div{font-family:var(--display);font-weight:700;font-size:min(16vw,26vh);line-height:.95;text-align:center;color:var(--ink);animation:pop .4s ease}
+.pop small{display:block;font-family:var(--body);font-weight:600;font-size:max(3.4vh,18px);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:2vh}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.pop div{animation:none}.fill,.bar i{transition:none}}
+@media (orientation:portrait){
+.cols{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:2vh}
+.col+.col{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:2vh}
+.total{font-size:min(40vw,20vh)}
+}
+</style>
+</head>
+<body>
+<main class="tv">
+<header>
+<div class="brand" id="month">Challenge</div>
+<div class="left" id="left"></div>
+</header>
+<div class="cols">
+<section class="col hero">
+<div class="label">Team reps · push-ups + sit-ups</div>
+<div class="total" id="total">0</div>
+<div class="sub" id="goaltxt"></div>
+<div class="track"><div class="fill" id="fill"></div><div class="pace" id="pace"></div></div>
+<div class="pacetxt" id="pacetxt"></div>
+<div class="extra" id="extra"></div>
+<div class="extra" id="split"></div>
+</section>
+<section class="col">
+<div class="label">Leaderboard</div>
+<ol class="rows" id="board"></ol>
+</section>
+</div>
+<footer>
+<ul class="feed" id="feed"></ul>
+<div class="join">
+<div id="qr"></div>
+<div class="jt">Add yours<b id="joinUrl"></b></div>
+</div>
+</footer>
+</main>
+<div class="pop" id="pop" hidden><div><small id="popWho"></small><span id="popN"></span></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var CONFIG = {
+DB_URL: "https://pushups-2a3c6-default-rtdb.firebaseio.com",
+GOALS: { pushups: 2000, situps: 2000 },
+ROWS: 8
+};
+(function(){
+var DB = CONFIG.DB_URL.replace(/\/+$/, "");
+var EXS = ["pushups", "situps"];
+var UNIT = { pushups: "push-ups", situps: "sit-ups" };
+var $ = function(id){ return document.getElementById(id); };
+var counts = { pushups:{}, situps:{} }, roster = { pushups:{}, situps:{} }, feed = [];
+var seenId = null, firstLoad = true, busy = false, again = false, popTimer = null;
+var JOIN = new URL("./", location.href).href;
+function monthKey(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function ago(t){
+var s = Math.max(0, Math.round((Date.now() - t) / 1000));
+if(s < 60) return "just now";
+var m = Math.round(s / 60); if(m < 60) return m + " min ago";
+var h = Math.round(m / 60); if(h < 24) return h + " hr ago";
+return Math.round(h / 24) + " d ago";
+}
+function getJSON(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
+function cnt(e, k){ var v = counts[e][k]; return typeof v === "number" ? v : 0; }
+function members(k){ return EXS.filter(function(e){ return roster[e] && roster[e][k]; }); }
+function allNames(){
+var seen = {}, list = [];
+EXS.forEach(function(e){ Object.keys(roster[e]).forEach(function(k){ if(!seen[k]){ seen[k] = 1; list.push(k); } }); });
+return list;
+}
+function isOutP(k){ var m = members(k); return m.length > 0 && m.every(function(e){ return roster[e][k].out === true; }); }
+function pGoal(k){ return members(k).reduce(function(s, e){ return s + CONFIG.GOALS[e]; }, 0); }
+function pRaw(k){ return members(k).reduce(function(s, e){ return s + cnt(e, k); }, 0); }
+function pCounted(k){ return members(k).reduce(function(s, e){ return s + Math.min(cnt(e, k), CONFIG.GOALS[e]); }, 0); }
+function tag(k){ var m = members(k); return m.length > 1 ? "Both" : m[0] === "pushups" ? "Push-ups" : "Sit-ups"; }
+function fetchAll(){
+var mk = monthKey();
+return Promise.all([
+getJSON(DB + "/counts/" + mk + ".json"),
+getJSON(DB + "/roster.json"),
+getJSON(DB + "/log/" + mk + '.json?orderBy=%22%24key%22&limitToLast=6').catch(function(){ return null; })
+]).then(function(a){
+var c = a[0] || {}, r = a[1] || {}, l = a[2] || {};
+var items = Object.keys(l).sort().reverse().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){
+return e && typeof e.n === "number" && typeof e.name === "string" && EXS.indexOf(e.ex) > -1;
+});
+return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, feed: items };
+});
+}
+function popFor(e){
+$("popWho").textContent = e.name + " · " + UNIT[e.ex]; $("popN").textContent = "+" + e.n; $("pop").hidden = false;
+clearTimeout(popTimer); popTimer = setTimeout(function(){ $("pop").hidden = true; }, 5000);
+}
+function fit(el){
+var box = el.parentNode; if(!box || !box.clientWidth) return;
+el.style.fontSize = "";
+var size = parseFloat(getComputedStyle(el).fontSize), guard = 0;
+while(el.scrollWidth > box.clientWidth && size > 24 && guard++ < 40){ size *= 0.93; el.style.fontSize = size + "px"; }
+}
+function fitTotals(){ fit($("total")); }
+function renderTeam(C){
+var names = allNames().filter(function(k){ return !isOutP(k); });
+var goal = 0, counted = 0, raw = 0, atGoal = 0, by = { pushups: 0, situps: 0 };
+names.forEach(function(k){
+var g = pGoal(k), c = pCounted(k); goal += g; counted += c; raw += pRaw(k); if(c >= g) atGoal++;
+members(k).forEach(function(e){ by[e] += cnt(e, k); });
+});
+$("total").textContent = fmt(counted);
+var p = $("pacetxt");
+if(!names.length){
+$("goaltxt").textContent = "No one has joined yet. Scan the code to start.";
+$("fill").style.width = "0%"; p.textContent = ""; p.className = "pacetxt"; $("extra").textContent = ""; $("split").textContent = "";
+} else {
+$("goaltxt").textContent = "of " + fmt(goal) + " team goal · " + names.length + (names.length === 1 ? " person" : " people");
+$("fill").style.width = Math.min(100, counted / goal * 100) + "%";
+$("pace").style.left = "calc(" + Math.min(100, C.day / C.dim * 100) + "% - 1px)";
+var diff = Math.round(counted - goal * C.day / C.dim), need = Math.ceil(Math.max(0, goal - counted) / C.left);
+if(counted >= goal){ p.textContent = "Team goal reached. Everyone is at 100%."; p.className = "pacetxt ahead"; }
+else if(diff >= 0){ p.textContent = fmt(diff) + " ahead of pace · team needs " + fmt(need) + " a day"; p.className = "pacetxt ahead"; }
+else { p.textContent = fmt(-diff) + " behind pace · team needs " + fmt(need) + " a day"; p.className = "pacetxt behind"; }
+$("extra").textContent = atGoal + " of " + names.length + " at goal" + (raw - counted ? " · " + fmt(raw - counted) + " extra not counted" : "");
+$("split").textContent = "Push-ups " + fmt(by.pushups) + " · Sit-ups " + fmt(by.situps);
+}
+var b = $("board"); b.innerHTML = "";
+var sorted = names.slice().sort(function(a, z){ return pCounted(z) - pCounted(a) || pRaw(z) - pRaw(a) || a.localeCompare(z); });
+sorted.slice(0, CONFIG.ROWS).forEach(function(k, i){
+var g = pGoal(k), c = pCounted(k), li = document.createElement("li"); li.className = "row";
+var r = document.createElement("span"); r.className = "rank"; r.textContent = i + 1;
+var n = document.createElement("span"); n.className = "nm"; n.textContent = k;
+var t = document.createElement("span"); t.className = "tag"; t.textContent = tag(k); n.appendChild(t);
+var pc = document.createElement("span"); pc.className = "pc" + (c >= g ? " atgoal" : ""); pc.textContent = Math.floor(c / g * 100) + "%";
+var ct = document.createElement("span"); ct.className = "ct"; ct.textContent = fmt(pRaw(k));
+var sp = null;
+if(members(k).length > 1){ sp = document.createElement("div"); sp.className = "split"; sp.textContent = "Push-ups " + fmt(cnt("pushups", k)) + " · Sit-ups " + fmt(cnt("situps", k)); }
+var bar = document.createElement("div"); bar.className = "bar";
+var inner = document.createElement("i"); inner.style.width = Math.min(100, c / g * 100) + "%"; bar.appendChild(inner);
+li.appendChild(r); li.appendChild(n); li.appendChild(pc); li.appendChild(ct); if(sp) li.appendChild(sp); li.appendChild(bar);
+b.appendChild(li);
+});
+if(sorted.length > CONFIG.ROWS){
+var more = document.createElement("li"); more.className = "more"; more.textContent = "+ " + (sorted.length - CONFIG.ROWS) + " more"; b.appendChild(more);
+}
+}
+function render(){
+var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), day = d.getDate();
+var C = { dim: dim, day: day, left: dim - day + 1 };
+$("month").textContent = "Challenge · " + d.toLocaleString(undefined, {month:"long", year:"numeric"});
+$("left").textContent = C.left + (C.left === 1 ? " day left" : " days left");
+renderTeam(C);
+fitTotals();
+var f = $("feed"); f.innerHTML = "";
+feed.slice(0, 3).forEach(function(e){
+var li = document.createElement("li");
+var nb = document.createElement("b"); nb.textContent = e.name;
+li.appendChild(nb); li.appendChild(document.createTextNode(" +" + e.n));
+var x = document.createElement("span"); x.className = "ex"; x.textContent = UNIT[e.ex]; li.appendChild(x);
+var a = document.createElement("span"); a.className = "ago"; a.textContent = ago(e.t || Date.now());
+li.appendChild(a); f.appendChild(li);
+});
+if(!feed.length){
+var li0 = document.createElement("li"); li0.className = "ex"; li0.textContent = "Nothing logged yet. Scan the code to add yours."; f.appendChild(li0);
+}
+}
+function refresh(){
+if(busy){ again = true; return; }
+busy = true;
+fetchAll().then(function(r){
+counts = r.counts; roster = r.roster; feed = r.feed;
+var newest = feed[0];
+if(newest && newest.id !== seenId){
+if(!firstLoad && (Date.now() - (newest.t || 0)) < 120000) popFor(newest);
+seenId = newest.id;
+}
+firstLoad = false;
+render();
+}).catch(function(){}).then(function(){ busy = false; if(again){ again = false; refresh(); } });
+}
+$("joinUrl").textContent = JOIN.replace(/^https?:\/\//, "").replace(/\/$/, "");
+try{ new QRCode($("qr"), { text: JOIN, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M }); }catch(e){}
+if(!$("qr").children.length) $("qr").hidden = true;
+function keepAwake(){ try{ if(navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){}); }catch(e){} }
+keepAwake();
+window.addEventListener("resize", fitTotals);
+try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitTotals); }catch(e){}
+render(); refresh();
+try{
+var es1 = new EventSource(DB + "/counts.json"); es1.addEventListener("put", refresh); es1.addEventListener("patch", refresh);
+var es2 = new EventSource(DB + "/roster.json"); es2.addEventListener("put", refresh); es2.addEventListener("patch", refresh);
+}catch(e){}
+setInterval(refresh, 10000);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden){ keepAwake(); refresh(); } });
+})();
+</script>
+</body>
+</html>
