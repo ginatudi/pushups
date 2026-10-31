@@ -167,6 +167,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9;max-width:calc(100% - 36px)}
 .toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
 @media (prefers-reduced-motion:reduce){.fill,.bar i{transition:none}}
+.more{margin:0}.more summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600;padding:6px 0}.more>*:not(summary){margin-top:8px}
 :root:root:root{--bg:#0A0710;--surface:#16101F;--ink:#F5F1FA;--muted:#A89BB8;--line:#2A2038;--accent:#A78BFA;--accent-ink:#0A0710;--accent2:#E879F9;--good:#4ADE9A;--warn:#F472B6;color-scheme:dark}
 </style>
 </head>
@@ -190,8 +191,8 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <div class="sub" id="goaltxt"></div>
 <div class="track" aria-hidden="true"><div class="fill" id="fill"></div><div class="pace" id="pace"></div></div>
 <div class="pacetxt" id="pacetxt"></div>
-<div class="hint" id="extratxt"></div>
-<div class="hint" id="splittxt"></div>
+<details class="more"><summary>More details</summary><div class="hint" id="extratxt"></div>
+<div class="hint" id="splittxt"></div></details>
 <div class="pill" id="todaytxt"></div>
 <div class="pill" id="miletxt"></div>
 <div class="hint" id="nudge"></div>
@@ -199,7 +200,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <section>
 <div class="label" style="margin-bottom:10px">Leaderboard</div>
 <ul class="board" id="board"></ul>
-<div class="hint" id="boardHint" style="margin-top:10px">Tap a name to see their plan. The tick on each bar marks an even pace.</div>
+<div class="hint" id="boardHint" style="margin-top:10px">Tap a name for details.</div>
 </section>
 <section id="outSection" hidden>
 <div class="label" style="margin-bottom:6px">Out (not counted toward the team)</div>
@@ -467,13 +468,13 @@ var t2 = el("div", "track"), f2 = el("div", "fill"); f2.style.width = Math.min(1
 root.appendChild(tb);
 }
 root.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), P.msg));
-var parts = el("div", "tiles2");
+var more = el("details", "more"); more.appendChild(el("summary", "", "More details")); var parts = el("div", "tiles2");
 memberEx(name).forEach(function(x){
 var cx = cnt(name, x), t = el("div", "part");
 t.appendChild(el("span", "", LABEL[x])); t.appendChild(el("b", "", fmt(cx) + " / " + fmt(G(x))));
 parts.appendChild(t);
 });
-if(parts.childNodes.length) root.appendChild(parts);
+if(parts.childNodes.length) more.appendChild(parts);
 var cw = el("div", "chartwrap"), chart = el("div", "chart"), ideal = g / P.C.dim, vals = [];
 for(var i = 1; i <= P.C.dim; i++) vals.push(P.days[i] || 0);
 var max = Math.max(ideal * 1.25, Math.max.apply(null, vals), 1);
@@ -486,14 +487,14 @@ chart.appendChild(b);
 var gl = el("div", "goalline"); gl.style.bottom = (ideal / max * 100) + "%"; chart.appendChild(gl);
 cw.appendChild(chart);
 cw.appendChild(el("div", "cap", "Reps per day. Dashed line is the daily average needed (" + fmt(ideal) + ")."));
-root.appendChild(cw);
-if(P.raw > P.c) root.appendChild(el("p", "proj", fmt(P.raw - P.c) + " extra reps are a bonus and not counted toward the team."));
-if(!P.done && P.c > 0) root.appendChild(el("p", "proj", "At the current pace, the month ends around " + fmt(P.proj) + "."));
+more.appendChild(cw);
+if(P.raw > P.c) more.appendChild(el("p", "proj", fmt(P.raw - P.c) + " extra reps are a bonus and not counted toward the team."));
+if(!P.done && P.c > 0) more.appendChild(el("p", "proj", "At the current pace, the month ends around " + fmt(P.proj) + ".")); root.appendChild(more);
 return root;
 }
 function setStatus(kind){
 $("dot").className = "dot " + (kind === "live" ? "live" : kind === "off" ? "off" : "");
-$("statusTxt").textContent = kind === "live" ? "Live. Everyone sees the same totals."
+$("statusTxt").textContent = kind === "live" ? "Live"
 : kind === "off" ? "Can't reach the shared counter. Retrying…" : "Connecting…";
 }
 function fit(elm){
@@ -661,7 +662,7 @@ bump(e, name, -entry.n, mk).then(function(){ return removeLog(mk, entry.id); }).
 function buildMine(){
 var box = el("div", "card");
 box.appendChild(el("h2", "", "Your recent adds"));
-box.appendChild(el("p", "muted", "Added too many by mistake? Remove it here and your total goes back down."));
+box.appendChild(el("p", "muted", "Tap Remove to fix a mistake."));
 var mine = logAll.filter(function(x){ return x.name === me && isMember(me, x.ex); }).slice(-8).reverse();
 if(!mine.length){ box.appendChild(el("p", "muted", "Nothing added yet this month.")); return box; }
 var list = el("ul", "feed");
