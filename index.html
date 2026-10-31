@@ -6,7 +6,7 @@
 <title>Push-Up Counter</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Push-Ups">
+<meta name="apple-mobile-web-app-title" content="Challenge">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#EDEFF0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0D1014" media="(prefers-color-scheme: dark)">
@@ -16,283 +16,730 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 [hidden]{display:none!important}
-/* Layout: one phone-height column. Big team total on top, add buttons in thumb reach, leaderboard below. */
 :root{
-  --bg:#EDEFF0; --surface:#FFFFFF; --ink:#12161B; --muted:#5C6670; --line:#D5DADE;
-  --accent:#2340E6; --accent-ink:#FFFFFF; --good:#16794A; --warn:#B45309;
-  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
-  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--bg:#EDEFF0; --surface:#FFFFFF; --ink:#12161B; --muted:#5C6670; --line:#D5DADE;
+--accent:#2340E6; --accent-ink:#FFFFFF; --good:#16794A; --warn:#B45309;
+--display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+--body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
-    --accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
-  }
+:root:not([data-theme="light"]){
+--bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
+--accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
+}
 }
 :root[data-theme="dark"]{
-  --bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
-  --accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
+--bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
+--accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{
-  background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.4;
-  -webkit-text-size-adjust:100%; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
-  padding-top:max(18px, env(safe-area-inset-top, 0px));
-  padding-bottom:max(24px, env(safe-area-inset-bottom, 0px));
-  padding-left:max(18px, env(safe-area-inset-left, 0px));
-  padding-right:max(18px, env(safe-area-inset-right, 0px));
+background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.4;
+-webkit-text-size-adjust:100%; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+padding-top:max(18px, env(safe-area-inset-top, 0px));
+padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+padding-left:max(18px, env(safe-area-inset-left, 0px));
+padding-right:max(18px, env(safe-area-inset-right, 0px));
 }
-.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px;min-height:calc(100dvh - 42px)}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .month{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
 .left{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
-
+.panel{display:flex;flex-direction:column;gap:22px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;background:var(--line);border-radius:12px}
+.seg button{border:0;background:transparent;min-height:42px;border-radius:9px;font:inherit;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .hero{display:flex;flex-direction:column;gap:6px}
 .label{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.total{font-family:var(--display);font-weight:700;font-size:clamp(104px,36vw,176px);line-height:.85;letter-spacing:-.01em;font-variant-numeric:tabular-nums;margin:2px 0 4px}
+.total{display:block;font-family:var(--display);font-weight:700;font-size:clamp(104px,36vw,176px);line-height:.85;letter-spacing:-.01em;font-variant-numeric:tabular-nums;margin:2px 0 4px;white-space:nowrap}
 .sub{color:var(--muted);font-variant-numeric:tabular-nums}
 .track{position:relative;height:14px;border-radius:7px;background:var(--line);margin-top:8px;overflow:visible}
 .fill{height:100%;width:0;border-radius:7px;background:var(--accent);transition:width .5s ease}
 .pace{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink);opacity:.55;left:0}
 .pacetxt{font-size:14px;font-variant-numeric:tabular-nums}
-.pacetxt.ahead{color:var(--good)} .pacetxt.behind{color:var(--warn)}
-
+.pacetxt.ahead,.ahead{color:var(--good)} .pacetxt.behind,.behind{color:var(--warn)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font-size:18px}
+.card p{margin:0}
 .who{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .who b{font-weight:700}
-.link{background:none;border:0;color:var(--accent);font:inherit;padding:6px 2px;min-height:44px;cursor:pointer}
+.link{background:none;border:0;color:var(--accent);font:inherit;padding:6px 2px;min-height:44px;cursor:pointer;text-align:left}
+.muted{color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.chip:active{transform:scale(.97)}
+.checks{display:flex;flex-wrap:wrap;gap:10px}
+.check{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-weight:600;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.todaybox{display:flex;flex-direction:column;gap:8px}
+.todayrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.todaynum{font-family:var(--display);font-weight:700;font-size:56px;line-height:1;font-variant-numeric:tabular-nums}
+.todaynum small{font-size:28px;color:var(--muted);font-weight:600}
+.todaymsg{font-size:14px;color:var(--muted);text-align:right}
+.todaybox .track{margin-top:0;height:12px}
 .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 button.q{min-height:56px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:28px;cursor:pointer}
 button.q:active{transform:scale(.97)}
 .custom{display:flex;gap:10px}
 input[type=number],input[type=text]{flex:1;min-width:0;height:52px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px;font:inherit;font-size:18px}
-button.add{height:52px;padding:0 22px;border-radius:12px;border:2px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}
-button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-
-.board{display:flex;flex-direction:column;gap:12px;padding:0;margin:0;list-style:none}
-.row{display:grid;grid-template-columns:22px 1fr auto;gap:4px 10px;align-items:center}
+.stepper{display:flex;align-items:center;flex:1;min-width:0;height:52px;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden}
+.stepper button{width:52px;height:50px;flex:none;border:0;background:none;color:var(--accent);font-size:26px;font-weight:700;cursor:pointer}
+.stepper input{flex:1;min-width:0;width:100%;height:50px;border:0;border-radius:0;background:transparent;text-align:center;padding:0;font-variant-numeric:tabular-nums;font-weight:700}
+button.add{height:52px;padding:0 20px;border-radius:12px;border:2px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+button.add.solid{background:var(--accent);color:var(--accent-ink)}
+button.danger{min-height:48px;border-radius:12px;border:2px solid var(--warn);background:transparent;color:var(--warn);font:inherit;font-weight:700;cursor:pointer}
+button.danger.armed{background:var(--warn);color:var(--bg)}
+button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.board,.feed{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;list-style:none}
+.feed{gap:0}
+.row{display:grid;grid-template-columns:22px 1fr auto auto;gap:4px 10px;align-items:center;padding:8px 6px;margin:0 -6px;border-radius:10px;cursor:pointer}
+.row:active{background:var(--surface)}
+.row.outrow{opacity:.6}
 .rank{color:var(--muted);font-variant-numeric:tabular-nums;font-size:14px}
 .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .row.me .nm::after{content:" (you)";font-weight:400;color:var(--muted)}
-.ct{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
-.bar{grid-column:2 / 4;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.pc{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;min-width:38px}
+.pc.atgoal{color:var(--good);font-weight:700}
+.ct{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+.bar{grid-column:2 / 5;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);opacity:.75;border-radius:3px;transition:width .5s ease}
+.hint{color:var(--muted);font-size:13px}
 .empty{color:var(--muted)}
-
-.status{margin-top:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding-top:4px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.feed li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.feed li:last-child{border-bottom:0}
+.feed .what b{font-weight:700}
+.feed .ago{color:var(--muted);font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.plan{display:flex;flex-direction:column;gap:16px}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.pname{font-size:22px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pcount{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ppct{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pnum{font-family:var(--display);font-weight:700;font-size:96px;line-height:.85;font-variant-numeric:tabular-nums}
+.pof{color:var(--muted);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .tl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .tv{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.msg{margin:0;font-size:16px;line-height:1.45}
+.proj{margin:0;color:var(--muted);font-size:14px}
+.note{margin:0;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.chartwrap{display:flex;flex-direction:column;gap:6px}
+.chart{position:relative;display:flex;align-items:flex-end;gap:2px;height:84px}
+.chart i{flex:1;min-width:0;background:var(--accent);opacity:.8;border-radius:2px 2px 0 0;min-height:2px}
+.chart i.today{opacity:1}
+.chart i.future{background:var(--line);opacity:1;height:2px!important}
+.chart .goalline{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);opacity:.4;pointer-events:none}
+.cap{font-size:12px;color:var(--muted)}
+.tiles2{display:flex;flex-wrap:wrap;gap:8px}
+.part{display:flex;gap:8px;align-items:baseline;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px}
+.part span{color:var(--muted)} .part b{font-variant-numeric:tabular-nums}
+.split{grid-column:2 / 5;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tag{margin-left:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.actions{display:flex;flex-direction:column;gap:8px}
+.help{display:flex;flex-direction:column;gap:14px}
+.help h2{margin:0;font-size:18px}
+.help p,.help li{margin:0;font-size:15px;line-height:1.5}
+.help ol,.help ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+.tabs button{background:none;border:0;min-height:58px;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--accent)}
+.tabs svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+.foot .st{display:flex;align-items:center;gap:8px;min-width:0}
+.dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .dot.live{background:var(--good)} .dot.off{background:var(--warn)}
-
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px, env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:5;max-width:calc(100% - 36px)}
+.foot a{color:var(--accent);text-decoration:none;font-weight:600;white-space:nowrap}
+.sheet{position:fixed;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)}
+.sheetbox{width:100%;max-width:520px;max-height:90dvh;overflow:auto;background:var(--bg);border-radius:18px 18px 0 0;padding:14px max(18px, env(safe-area-inset-left, 0px)) calc(24px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:12px}
+.sheetbar{display:flex;justify-content:flex-end}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9;max-width:calc(100% - 36px)}
 .toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
 @media (prefers-reduced-motion:reduce){.fill,.bar i{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="top">
-    <div class="month" id="month">This month</div>
-    <div class="left" id="left"></div>
-  </div>
-
-  <section class="hero" aria-live="polite">
-    <div class="label">Team push-ups</div>
-    <div class="total" id="total">0</div>
-    <div class="sub" id="goaltxt"></div>
-    <div class="track" aria-hidden="true"><div class="fill" id="fill"></div><div class="pace" id="pace"></div></div>
-    <div class="pacetxt" id="pacetxt"></div>
-  </section>
-
-  <section class="card" id="whoCard">
-    <div id="nameForm" hidden>
-      <label class="label" for="nameInput">Your name</label>
-      <div class="custom" style="margin-top:8px">
-        <input type="text" id="nameInput" maxlength="20" autocomplete="given-name" placeholder="First name">
-        <button class="add" id="saveName" type="button">Save</button>
-      </div>
-    </div>
-    <div id="addForm" hidden>
-      <div class="who"><span>Adding as <b id="meName"></b></span><button class="link" id="changeName" type="button">Change</button></div>
-      <div class="quick">
-        <button class="q" type="button" data-n="5">+5</button>
-        <button class="q" type="button" data-n="10">+10</button>
-        <button class="q" type="button" data-n="20">+20</button>
-        <button class="q" type="button" data-n="25">+25</button>
-      </div>
-      <div class="custom">
-        <input type="number" id="custom" inputmode="numeric" min="1" max="1000" placeholder="Other amount">
-        <button class="add" id="addCustom" type="button">Add</button>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="label" style="margin-bottom:12px">Leaderboard</div>
-    <ul class="board" id="board"></ul>
-  </section>
-
-  <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Connecting…</span></div>
+<div class="top">
+<div class="month" id="month">This month</div>
+<div class="left" id="left"></div>
+</div>
+<div class="seg" id="seg" role="group" aria-label="Exercise">
+<button type="button" data-ex="pushups" aria-pressed="true">Push-ups</button>
+<button type="button" data-ex="situps" aria-pressed="false">Sit-ups</button>
+</div>
+<section class="panel" id="tab-add" role="tabpanel" aria-label="Add">
+<div id="addBody" class="panel"></div>
+</section>
+<section class="panel" id="tab-team" role="tabpanel" aria-label="Team" hidden>
+<section class="hero" aria-live="polite">
+<div class="label" id="teamLabel">Team push-ups</div>
+<div class="total" id="total">0</div>
+<div class="sub" id="goaltxt"></div>
+<div class="track" aria-hidden="true"><div class="fill" id="fill"></div><div class="pace" id="pace"></div></div>
+<div class="pacetxt" id="pacetxt"></div>
+<div class="hint" id="extratxt"></div>
+<div class="hint" id="splittxt"></div>
+</section>
+<section>
+<div class="label" style="margin-bottom:10px">Leaderboard</div>
+<ul class="board" id="board"></ul>
+<div class="hint" id="boardHint" style="margin-top:10px">Tap a name to see their plan.</div>
+</section>
+<section id="outSection" hidden>
+<div class="label" style="margin-bottom:6px">Out (not counted toward the team)</div>
+<ul class="board" id="outBoard"></ul>
+</section>
+<section>
+<div class="label" style="margin-bottom:6px">Recent</div>
+<ul class="feed" id="feed"></ul>
+</section>
+</section>
+<section class="panel" id="tab-me" role="tabpanel" aria-label="Me" hidden>
+<div id="meBody"></div>
+</section>
+<section class="panel help" id="tab-help" role="tabpanel" aria-label="How to use" hidden>
+<div class="card help">
+<h2>First time</h2>
+<ol>
+<li>Open the Add tab and tap your name. If it isn't there, type it once.</li>
+<li>Tick Push-ups, Sit-ups, or both, then tap Join.</li>
+<li>Your phone remembers you. You won't need to enter your name again.</li>
+</ol>
+</div>
+<div class="card help">
+<h2>Adding reps</h2>
+<ol>
+<li>Pick Push-ups or Sit-ups at the top, whichever you just did.</li>
+<li>Tap +5, +10, +20, or +25 after a set. For other amounts, use the + and − buttons and tap Add.</li>
+<li>Tapped by mistake? Tap Undo in the message that pops up. You have 8 seconds.</li>
+</ol>
+</div>
+<div class="card help">
+<h2>Your goal</h2>
+<p>Your goal is 2,000 push-ups, 2,000 sit-ups, or both (4,000 total) for the month. You choose. Push-ups and sit-ups add up together as one count.</p>
+<p>The Me tab shows the daily and weekly amount that finishes your goal on time. Tap any name on the Team tab to see theirs.</p>
+</div>
+<div class="card help">
+<h2>Team goal</h2>
+<ul>
+<li>There is one team total, push-ups and sit-ups together.</li>
+<li>The team is at 100% only when everyone is at 100% of their own goal.</li>
+<li>Extra reps past your goal are a bonus. They show on your own total but don't count toward the team.</li>
+<li>Each person who joins adds their goal to the team goal.</li>
+</ul>
+</div>
+<div class="card help">
+<h2>If someone drops out</h2>
+<p>Tap their name on the Team tab, then tap Mark as out twice. They stop counting toward the team goal, and the goal shrinks by their share. Tap Bring back if they return. A name added by mistake with no reps can be removed there too.</p>
+</div>
+<div class="card help">
+<h2>Adding the other exercise later</h2>
+<p>Switch to it at the top of the Add tab and tap Join. Your goal goes up by 2,000.</p>
+</div>
+<div class="card help">
+<h2>Put it on your home screen (iPhone)</h2>
+<ol>
+<li>Open this page in Safari.</li>
+<li>Tap the Share button.</li>
+<li>Tap Add to Home Screen, then Add.</li>
+</ol>
+</div>
+<div class="card help">
+<h2>TV board</h2>
+<p>The TV board shows the team total, the leaderboard, and a QR code to join. Open <b>tv.html</b> on the TV's browser, or tap the TV board link below.</p>
+</div>
+</section>
+<div class="foot">
+<div class="st"><span class="dot" id="dot"></span><span id="statusTxt">Connecting…</span></div>
+<a href="tv.html">TV board</a>
+</div>
+</div>
+<nav class="tabs" role="tablist" aria-label="Sections">
+<button type="button" role="tab" data-tab="add" aria-selected="true">
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add</button>
+<button type="button" role="tab" data-tab="team" aria-selected="false">
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Team</button>
+<button type="button" role="tab" data-tab="me" aria-selected="false">
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Me</button>
+<button type="button" role="tab" data-tab="help" aria-selected="false">
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>How to</button>
+</nav>
+<div class="sheet" id="sheet" hidden>
+<div class="sheetbox" role="dialog" aria-modal="true" aria-label="Plan">
+<div class="sheetbar"><button class="link" id="sheetClose" type="button">Close</button></div>
+<div id="sheetBody"></div>
+</div>
 </div>
 <div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastBtn" type="button" hidden>Undo</button></div>
-
 <script>
-/* ---------- Settings you may want to change ---------- */
 var CONFIG = {
-  DB_URL: "https://pushups-2a3c6-default-rtdb.firebaseio.com",
-  GOAL: 1500    // team goal for the month
+DB_URL: "https://pushups-2a3c6-default-rtdb.firebaseio.com",
+GOALS: { pushups: 2000, situps: 2000 }
 };
-/* ----------------------------------------------------- */
 (function(){
-  try{
-    var ic = document.createElement("canvas"); ic.width = ic.height = 180;
-    var x = ic.getContext("2d"); x.fillStyle = "#2340E6"; x.fillRect(0,0,180,180); x.fillStyle = "#fff";
-    x.beginPath(); x.moveTo(90,34); x.lineTo(142,92); x.lineTo(110,92); x.lineTo(110,146); x.lineTo(70,146); x.lineTo(70,92); x.lineTo(38,92); x.closePath(); x.fill();
-    document.getElementById("touchIcon").href = ic.toDataURL("image/png");
-  }catch(e){}
+try{
+var ic = document.createElement("canvas"); ic.width = ic.height = 180;
+var x = ic.getContext("2d"); x.fillStyle = "#2340E6"; x.fillRect(0,0,180,180); x.fillStyle = "#fff";
+x.beginPath(); x.moveTo(90,34); x.lineTo(142,92); x.lineTo(110,92); x.lineTo(110,146); x.lineTo(70,146); x.lineTo(70,92); x.lineTo(38,92); x.closePath(); x.fill();
+document.getElementById("touchIcon").href = ic.toDataURL("image/png");
+}catch(e){}
 })();
 (function(){
-  var DB = CONFIG.DB_URL.replace(/\/+$/, "");
-  var $ = function(id){ return document.getElementById(id); };
-  var store = {
-    get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
-    set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-  };
-  var counts = {}, me = store.get("pu_name") || "", last = null, toastTimer = null, busy = false, again = false;
-
-  function monthKey(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
-  function cleanName(s){ return s.replace(/[.$#\[\]\/]/g,"").replace(/\s+/g," ").trim().slice(0,20); }
-  function fmt(n){ return n.toLocaleString(); }
-
-  function fetchCounts(){
-    if(!DB){
-      try{ return Promise.resolve(JSON.parse(store.get("pu_local_"+monthKey()) || "{}")); }catch(e){ return Promise.resolve({}); }
-    }
-    return fetch(DB + "/pushups/" + monthKey() + ".json").then(function(r){
-      if(!r.ok) throw new Error(r.status);
-      return r.json();
-    }).then(function(j){ return j || {}; });
-  }
-  function bump(key, n){
-    if(!DB){
-      return fetchCounts().then(function(c){
-        c[key] = Math.max(0, (c[key]||0) + n);
-        store.set("pu_local_"+monthKey(), JSON.stringify(c));
-      });
-    }
-    return fetch(DB + "/pushups/" + monthKey() + "/" + encodeURIComponent(key) + ".json", {
-      method:"PUT", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({".sv":{"increment":n}})
-    }).then(function(r){ if(!r.ok) throw new Error(r.status); });
-  }
-
-  function setStatus(kind){
-    var dot = $("dot"), t = $("statusTxt");
-    dot.className = "dot " + (kind === "live" ? "live" : kind === "off" ? "off" : "");
-    t.textContent = kind === "live" ? "Live. Everyone sees the same total."
-      : kind === "off" ? "Can't reach the shared counter. Retrying…"
-      : "Test mode: counts stay on this phone until the database is connected.";
-  }
-
-  function render(){
-    var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), day = d.getDate();
-    $("month").textContent = d.toLocaleString(undefined, {month:"long", year:"numeric"});
-    var daysLeft = dim - day + 1;
-    $("left").textContent = daysLeft + (daysLeft === 1 ? " day left" : " days left");
-
-    var names = Object.keys(counts).filter(function(k){ return typeof counts[k] === "number" && counts[k] > 0; });
-    names.sort(function(a,b){ return counts[b] - counts[a] || a.localeCompare(b); });
-    var total = names.reduce(function(s,k){ return s + counts[k]; }, 0);
-    $("total").textContent = fmt(total);
-    $("goaltxt").textContent = "of " + fmt(CONFIG.GOAL) + " goal";
-    $("fill").style.width = Math.min(100, total / CONFIG.GOAL * 100) + "%";
-    var expected = CONFIG.GOAL * day / dim;
-    $("pace").style.left = "calc(" + Math.min(100, day / dim * 100) + "% - 1px)";
-    var diff = Math.round(total - expected), p = $("pacetxt");
-    if(total >= CONFIG.GOAL){ p.textContent = "Goal reached."; p.className = "pacetxt ahead"; }
-    else if(diff >= 0){ p.textContent = fmt(diff) + " ahead of pace"; p.className = "pacetxt ahead"; }
-    else { p.textContent = fmt(-diff) + " behind pace"; p.className = "pacetxt behind"; }
-
-    var b = $("board"); b.innerHTML = "";
-    if(!names.length){
-      var li = document.createElement("li"); li.className = "empty";
-      li.textContent = "No push-ups logged yet this month. Be the first.";
-      b.appendChild(li);
-    }
-    var top = names.length ? counts[names[0]] : 1;
-    names.forEach(function(k,i){
-      var li = document.createElement("li"); li.className = "row" + (k === me ? " me" : "");
-      var r = document.createElement("span"); r.className = "rank"; r.textContent = i+1;
-      var n = document.createElement("span"); n.className = "nm"; n.textContent = k;
-      var c = document.createElement("span"); c.className = "ct"; c.textContent = fmt(counts[k]);
-      var bar = document.createElement("div"); bar.className = "bar";
-      var inner = document.createElement("i"); inner.style.width = (counts[k] / top * 100) + "%"; bar.appendChild(inner);
-      li.appendChild(r); li.appendChild(n); li.appendChild(c); li.appendChild(bar);
-      b.appendChild(li);
-    });
-
-    $("nameForm").hidden = !!me && !$("nameForm").dataset.open;
-    $("addForm").hidden = !me || !!$("nameForm").dataset.open;
-    $("meName").textContent = me;
-  }
-
-  function refresh(){
-    if(busy){ again = true; return; }
-    busy = true;
-    fetchCounts().then(function(c){ counts = c; render(); setStatus(DB ? "live" : "test"); })
-      .catch(function(){ setStatus("off"); })
-      .then(function(){ busy = false; if(again){ again = false; refresh(); } });
-  }
-
-  function toast(msg, withUndo){
-    clearTimeout(toastTimer);
-    $("toastMsg").textContent = msg; $("toastBtn").hidden = !withUndo; $("toast").hidden = false;
-    toastTimer = setTimeout(function(){ $("toast").hidden = true; last = null; }, 8000);
-  }
-
-  function add(n){
-    n = Math.floor(Number(n));
-    if(!me){ showNameForm(); return; }
-    if(!(n > 0 && n <= 1000)){ toast("Enter a number from 1 to 1,000.", false); return; }
-    counts[me] = (counts[me]||0) + n; render();
-    bump(me, n).then(function(){ last = {key:me, n:n}; toast("+" + n + " added", true); })
-      .catch(function(){ counts[me] = Math.max(0,(counts[me]||0) - n); render(); toast("Couldn't save. Check your connection and try again.", false); });
-  }
-  function undo(){
-    if(!last) return;
-    var l = last; last = null; $("toast").hidden = true;
-    counts[l.key] = Math.max(0,(counts[l.key]||0) - l.n); render();
-    bump(l.key, -l.n).catch(function(){ toast("Couldn't undo. Check your connection.", false); refresh(); });
-  }
-
-  function showNameForm(){
-    $("nameForm").dataset.open = "1"; $("nameInput").value = me; render(); $("nameInput").focus();
-  }
-  function saveName(){
-    var v = cleanName($("nameInput").value);
-    if(!v) return;
-    me = v; store.set("pu_name", me); delete $("nameForm").dataset.open; render();
-  }
-
-  document.querySelectorAll("button.q").forEach(function(btn){
-    btn.addEventListener("click", function(){ add(btn.getAttribute("data-n")); });
-  });
-  $("addCustom").addEventListener("click", function(){ add($("custom").value); $("custom").value = ""; });
-  $("custom").addEventListener("keydown", function(e){ if(e.key === "Enter"){ add($("custom").value); $("custom").value = ""; } });
-  $("changeName").addEventListener("click", showNameForm);
-  $("saveName").addEventListener("click", saveName);
-  $("nameInput").addEventListener("keydown", function(e){ if(e.key === "Enter") saveName(); });
-  $("toastBtn").addEventListener("click", undo);
-
-  render(); setStatus(DB ? "" : "test"); refresh();
-  if(DB){
-    try{
-      var es = new EventSource(DB + "/pushups.json");
-      es.addEventListener("put", refresh); es.addEventListener("patch", refresh);
-    }catch(e){}
-    setInterval(refresh, 20000);
-  }
-  document.addEventListener("visibilitychange", function(){ if(!document.hidden) refresh(); });
+var DB = CONFIG.DB_URL.replace(/\/+$/, "");
+var EXS = ["pushups", "situps"];
+var LABEL = { pushups: "Push-ups", situps: "Sit-ups" };
+var UNIT = { pushups: "push-ups", situps: "sit-ups" };
+var $ = function(id){ return document.getElementById(id); };
+var store = {
+get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+var counts = { pushups:{}, situps:{} }, roster = { pushups:{}, situps:{} }, logAll = [];
+var me = store.get("pu_name") || "", ex = store.get("pu_ex"), last = null, toastTimer = null, busy = false, again = false;
+var tab = "add", sheetName = "", sheetConfirm = "", changingName = false;
+if(EXS.indexOf(ex) < 0) ex = "pushups";
+var reps = parseInt(store.get("pu_reps"), 10); if(!(reps > 0 && reps <= 1000)) reps = 15;
+var draft = { name:"", pushups:false, situps:false };
+function G(e){ return CONFIG.GOALS[e || ex]; }
+function monthKey(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+function cleanName(s){ return s.replace(/[.$#\[\]\/]/g,"").replace(/\s+/g," ").trim().slice(0,20); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function ago(t){
+var s = Math.max(0, Math.round((Date.now() - t) / 1000));
+if(s < 60) return "just now";
+var m = Math.round(s / 60); if(m < 60) return m + " min ago";
+var h = Math.round(m / 60); if(h < 24) return h + " hr ago";
+return Math.round(h / 24) + " d ago";
+}
+function el(tag, cls, text){
+var e = document.createElement(tag);
+if(cls) e.className = cls;
+if(text !== undefined) e.textContent = text;
+return e;
+}
+function btn(cls, text, fn){ var b = el("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
+function getJSON(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }); }
+function okOrThrow(r){ if(!r.ok) throw new Error(r.status); return r; }
+function put(path, body){ return fetch(DB + path + ".json", { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }).then(okOrThrow); }
+function isMember(name, e){ return !!(roster[e] && roster[e][name]); }
+function isOut(name, e){ return !!(roster[e] && roster[e][name] && roster[e][name].out === true); }
+function cnt(name, e){ var v = counts[e] && counts[e][name]; return typeof v === "number" ? v : 0; }
+function memberEx(name){ return EXS.filter(function(e){ return isMember(name, e); }); }
+function personOut(name){ var m = memberEx(name); return m.length > 0 && m.every(function(e){ return isOut(name, e); }); }
+function pGoal(name){ return memberEx(name).reduce(function(s, e){ return s + G(e); }, 0); }
+function pRaw(name){ return memberEx(name).reduce(function(s, e){ return s + cnt(name, e); }, 0); }
+function pCounted(name){ return memberEx(name).reduce(function(s, e){ return s + Math.min(cnt(name, e), G(e)); }, 0); }
+function allNames(){
+var seen = {}, list = [];
+EXS.forEach(function(e){ Object.keys(roster[e] || {}).forEach(function(k){ if(!seen[k]){ seen[k] = 1; list.push(k); } }); });
+return list.sort(function(a,b){ return a.localeCompare(b); });
+}
+function activeNames(){ return allNames().filter(function(k){ return !personOut(k); }); }
+function outNames(){ return allNames().filter(personOut); }
+function findName(typed){
+var t = typed.toLowerCase(), names = allNames();
+for(var i = 0; i < names.length; i++) if(names[i].toLowerCase() === t) return names[i];
+return null;
+}
+function exTag(name){ var m = memberEx(name); return m.length > 1 ? "Both" : m.length ? LABEL[m[0]] : ""; }
+function team(){
+var names = activeNames(), goal = 0, counted = 0, raw = 0, atGoal = 0, by = { pushups: 0, situps: 0 };
+names.forEach(function(k){
+var g = pGoal(k), c = pCounted(k); goal += g; counted += c; raw += pRaw(k); if(c >= g) atGoal++;
+memberEx(k).forEach(function(e){ by[e] += cnt(k, e); });
+});
+return { names: names, people: names.length, goal: goal, counted: counted, extra: raw - counted, atGoal: atGoal, by: by };
+}
+function fetchAll(){
+var mk = monthKey();
+return Promise.all([
+getJSON(DB + "/counts/" + mk + ".json"),
+getJSON(DB + "/roster.json"),
+getJSON(DB + "/log/" + mk + '.json?orderBy=%22%24key%22&limitToLast=1000').catch(function(){ return null; })
+]).then(function(a){
+var c = a[0] || {}, r = a[1] || {}, l = a[2] || {};
+var items = Object.keys(l).sort().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){
+return e && typeof e.n === "number" && typeof e.name === "string" && typeof e.t === "number" && EXS.indexOf(e.ex) > -1;
+});
+return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, log: items };
+});
+}
+function bump(e, key, n, mk){ return put("/counts/" + (mk || monthKey()) + "/" + e + "/" + encodeURIComponent(key), {".sv":{"increment":n}}); }
+function addLog(e, key, n, t){
+return fetch(DB + "/log/" + monthKey() + ".json", {
+method:"POST", headers:{"Content-Type":"application/json"},
+body: JSON.stringify({n:n, name:key, ex:e, t:t})
+}).then(okOrThrow).then(function(r){ return r.json(); }).then(function(j){ return j && j.name; });
+}
+function removeLog(mk, id){
+if(!id) return Promise.resolve();
+return fetch(DB + "/log/" + mk + "/" + id + ".json", { method:"DELETE" }).catch(function(){});
+}
+function setRoster(e, name, out){
+roster[e] = roster[e] || {}; roster[e][name] = { out: out }; render();
+return put("/roster/" + e + "/" + encodeURIComponent(name), { out: out }).catch(function(){ toast("Couldn't save. Check your connection.", false); refresh(); });
+}
+function setPersonOut(name, out){ memberEx(name).forEach(function(e){ setRoster(e, name, out); }); }
+function dropPerson(name){
+var m = memberEx(name);
+m.forEach(function(e){ if(roster[e]) delete roster[e][name]; });
+render();
+return Promise.all(m.map(function(e){ return fetch(DB + "/roster/" + e + "/" + encodeURIComponent(name) + ".json", { method:"DELETE" }).then(okOrThrow); }))
+.catch(function(){ toast("Couldn't remove. Check your connection.", false); refresh(); });
+}
+function calendar(){
+var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), day = d.getDate();
+return { dim: dim, day: day, left: dim - day + 1 };
+}
+function daily(name){
+var m = {};
+logAll.forEach(function(x){ if(x.name === name && isMember(name, x.ex)){ var di = new Date(x.t).getDate(); m[di] = (m[di]||0) + x.n; } });
+return m;
+}
+function plan(name){
+var C = calendar(), g = pGoal(name), c = pCounted(name), days = daily(name);
+var d = Math.min(c, days[C.day] || 0);
+var R0 = Math.max(0, g - (c - d));
+var need = R0 > 0 ? Math.ceil(R0 / C.left) : 0;
+var toGo = Math.max(0, need - d);
+var rem = Math.max(0, g - c);
+var diff = Math.round(c - g * C.day / C.dim);
+var P = {
+name: name, g: g, c: c, raw: pRaw(name), d: d, days: days, C: C,
+pct: g ? Math.floor(c / g * 100) : 0, rem: rem, need: need, toGo: toGo,
+week: Math.min(R0, need * 7), diff: diff, done: g > 0 && c >= g, proj: Math.round(c / C.day * C.dim)
+};
+var you = name === me, first = you ? "You're" : name + " is", poss = you ? "you" : "them";
+if(P.done) P.msg = (you ? "You hit" : name + " hit") + " the goal. Extra reps are a bonus, but they don't count toward the team total.";
+else if(c === 0) P.msg = "Fresh start. " + fmt(need) + " today gets " + poss + " on track, and a few small sets add up fast.";
+else if(C.left === 1) P.msg = "Last day. " + fmt(rem) + " to finish the challenge.";
+else if(need > 0 && toGo === 0) P.msg = "Today's target is done. " + fmt(need) + " a day keeps " + poss + " on track for the month.";
+else if(diff >= 0) P.msg = first + " " + fmt(diff) + " ahead of an even pace. " + fmt(need) + " a day keeps it that way.";
+else P.msg = first + " " + fmt(-diff) + " behind an even pace, and " + fmt(need) + " a day still gets " + poss + " there.";
+return P;
+}
+function buildPlan(name){
+var P = plan(name), g = P.g, root = el("div", "plan");
+var head = el("div", "phead"); head.appendChild(el("div", "pname", name)); head.appendChild(el("div", "pcount", fmt(P.raw) + " reps this month"));
+root.appendChild(head);
+var big = el("div", "ppct");
+big.appendChild(el("span", "pnum", P.pct + "%"));
+big.appendChild(el("span", "pof", fmt(P.c) + " of " + fmt(g)));
+root.appendChild(big);
+var tr = el("div", "track"); var fl = el("div", "fill"); fl.style.width = Math.min(100, P.c / g * 100) + "%"; tr.appendChild(fl);
+var pc = el("div", "pace"); pc.style.left = "calc(" + (P.C.day / P.C.dim * 100) + "% - 1px)"; tr.appendChild(pc);
+root.appendChild(tr);
+var tiles = el("div", "tiles");
+[["Left", P.done ? "0" : fmt(P.rem)], ["Per day", P.done ? "-" : fmt(P.need)], ["Per week", P.done ? "-" : fmt(P.week)]].forEach(function(t){
+var tile = el("div", "tile"); tile.appendChild(el("div", "tl", t[0])); tile.appendChild(el("div", "tv", t[1])); tiles.appendChild(tile);
+});
+root.appendChild(tiles);
+if(P.need > 0){
+var tb = el("div", "todaybox"), row = el("div", "todayrow");
+var num = el("div", "todaynum", fmt(P.d)); num.appendChild(el("small", "", " / " + fmt(P.need)));
+row.appendChild(num); row.appendChild(el("div", "todaymsg", P.toGo > 0 ? fmt(P.toGo) + " to go today" : "Done for today"));
+tb.appendChild(el("div", "label", "Today")); tb.appendChild(row);
+var t2 = el("div", "track"), f2 = el("div", "fill"); f2.style.width = Math.min(100, P.d / P.need * 100) + "%"; t2.appendChild(f2); tb.appendChild(t2);
+root.appendChild(tb);
+}
+root.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), P.msg));
+var parts = el("div", "tiles2");
+memberEx(name).forEach(function(x){
+var cx = cnt(name, x), t = el("div", "part");
+t.appendChild(el("span", "", LABEL[x])); t.appendChild(el("b", "", fmt(cx) + " / " + fmt(G(x))));
+parts.appendChild(t);
+});
+if(parts.childNodes.length) root.appendChild(parts);
+var cw = el("div", "chartwrap"), chart = el("div", "chart"), ideal = g / P.C.dim, vals = [];
+for(var i = 1; i <= P.C.dim; i++) vals.push(P.days[i] || 0);
+var max = Math.max(ideal * 1.25, Math.max.apply(null, vals), 1);
+vals.forEach(function(v, idx){
+var b = el("i"), day = idx + 1;
+if(day > P.C.day) b.className = "future";
+else { b.style.height = Math.max(2, v / max * 100) + "%"; if(day === P.C.day) b.className = "today"; }
+chart.appendChild(b);
+});
+var gl = el("div", "goalline"); gl.style.bottom = (ideal / max * 100) + "%"; chart.appendChild(gl);
+cw.appendChild(chart);
+cw.appendChild(el("div", "cap", "Reps per day. Dashed line is the daily average needed (" + fmt(ideal) + ")."));
+root.appendChild(cw);
+if(P.raw > P.c) root.appendChild(el("p", "proj", fmt(P.raw - P.c) + " extra reps are a bonus and not counted toward the team."));
+if(!P.done && P.c > 0) root.appendChild(el("p", "proj", "At the current pace, the month ends around " + fmt(P.proj) + "."));
+return root;
+}
+function setStatus(kind){
+$("dot").className = "dot " + (kind === "live" ? "live" : kind === "off" ? "off" : "");
+$("statusTxt").textContent = kind === "live" ? "Live. Everyone sees the same totals."
+: kind === "off" ? "Can't reach the shared counter. Retrying…" : "Connecting…";
+}
+function fit(elm){
+var box = elm.parentNode; if(!box || !box.clientWidth) return;
+elm.style.fontSize = "";
+var size = parseFloat(getComputedStyle(elm).fontSize), guard = 0;
+while(elm.scrollWidth > box.clientWidth && size > 24 && guard++ < 40){ size *= 0.93; elm.style.fontSize = size + "px"; }
+}
+function fitTotal(){ fit($("total")); }
+function renderAdd(){
+var body = $("addBody"); body.innerHTML = "";
+if(!me || changingName){
+var c = el("section", "card");
+c.appendChild(el("h2", "", "Who are you?"));
+var names = allNames();
+if(names.length){
+c.appendChild(el("p", "muted", "Tap your name. Your phone will remember it."));
+var chips = el("div", "chips");
+names.forEach(function(k){
+chips.appendChild(btn("chip", k, function(){ me = k; store.set("pu_name", k); changingName = false; render(); }));
+});
+c.appendChild(chips);
+}
+var nc = el("section", "card");
+nc.appendChild(el("h2", "", names.length ? "New here?" : "Add your name"));
+var inp = el("input"); inp.type = "text"; inp.id = "newName"; inp.maxLength = 20; inp.placeholder = "First name"; inp.autocomplete = "given-name";
+inp.value = draft.name; inp.addEventListener("input", function(){ draft.name = inp.value; });
+nc.appendChild(inp);
+nc.appendChild(el("p", "muted", "What are you doing?"));
+var checks = el("div", "checks");
+EXS.forEach(function(e){
+var lab = el("label", "check"), cb = el("input"); cb.type = "checkbox"; cb.checked = draft[e];
+cb.addEventListener("change", function(){ draft[e] = cb.checked; });
+lab.appendChild(cb); lab.appendChild(document.createTextNode(LABEL[e])); checks.appendChild(lab);
+});
+nc.appendChild(checks);
+nc.appendChild(btn("add solid", "Join", joinNew));
+body.appendChild(c.childNodes.length > 1 ? c : el("div"));
+body.appendChild(nc);
+if(changingName) body.appendChild(btn("link", "Cancel", function(){ changingName = false; render(); }));
+return;
+}
+if(memberEx(me).length && personOut(me)){
+var o = el("section", "card");
+o.appendChild(el("h2", "", "You're marked out"));
+o.appendChild(el("p", "muted", "You aren't counted toward the team goal. Come back any time."));
+o.appendChild(btn("add solid", "Bring me back", function(){ setPersonOut(me, false); }));
+body.appendChild(o); return;
+}
+if(!isMember(me, ex)){
+var j = el("section", "card");
+j.appendChild(el("div", "who")).appendChild(el("span", "", "Adding as ")).appendChild(el("b", "", me));
+j.appendChild(el("h2", "", "Join " + LABEL[ex]));
+j.appendChild(el("p", "muted", memberEx(me).length ? "Add " + LABEL[ex] + " on top of what you're already doing. Your goal goes up by " + fmt(G()) + "." : "You're not in " + LABEL[ex] + " yet. Joining adds a " + fmt(G()) + " goal for you."));
+j.appendChild(btn("add solid", "Join " + LABEL[ex], function(){ setRoster(ex, me, false); }));
+j.appendChild(btn("link", "Not you? Change name", function(){ changingName = true; render(); }));
+body.appendChild(j); return;
+}
+var P = plan(me);
+var card = el("section", "card");
+var who = el("div", "who"), sp = el("span", "", "Adding as "); sp.appendChild(el("b", "", me)); who.appendChild(sp);
+who.appendChild(btn("link", "Change", function(){ changingName = true; render(); }));
+card.appendChild(who);
+var tb = el("div", "todaybox"); tb.setAttribute("aria-live", "polite");
+tb.appendChild(el("div", "label", "Today · all your reps"));
+var row = el("div", "todayrow"), num = el("div", "todaynum", fmt(P.d));
+if(P.done){ row.appendChild(num); row.appendChild(el("div", "todaymsg", "Goal complete. Bonus reps now.")); }
+else { num.appendChild(el("small", "", " / " + fmt(P.need))); row.appendChild(num); row.appendChild(el("div", "todaymsg", P.toGo > 0 ? fmt(P.toGo) + " to go today" : "Done for today")); }
+tb.appendChild(row);
+var tr = el("div", "track"), fl = el("div", "fill"); fl.style.width = (P.done ? 100 : Math.min(100, P.need ? P.d / P.need * 100 : 100)) + "%"; tr.appendChild(fl); tb.appendChild(tr);
+card.appendChild(tb);
+card.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), P.msg));
+card.appendChild(el("div", "label", "Logging " + LABEL[ex]));
+var quick = el("div", "quick");
+[5, 10, 20, 25].forEach(function(n){ quick.appendChild(btn("q", "+" + n, function(){ add(n); })); });
+card.appendChild(quick);
+var cu = el("div", "custom"), st = el("div", "stepper");
+st.appendChild(btn("", "−", function(){ setReps(reps - (reps > 25 ? 5 : 1)); }));
+var ci = el("input"); ci.type = "number"; ci.id = "custom"; ci.inputMode = "numeric"; ci.min = 1; ci.max = 1000; ci.value = reps; ci.setAttribute("aria-label", "Amount to add");
+ci.addEventListener("change", function(){ setReps(ci.value); });
+ci.addEventListener("keydown", function(e){ if(e.key === "Enter"){ setReps(ci.value); add(reps); } });
+st.appendChild(ci);
+st.appendChild(btn("", "+", function(){ setReps(reps + (reps >= 25 ? 5 : 1)); }));
+cu.appendChild(st);
+var ab = btn("add", "Add " + reps, function(){ setReps(ci.value); add(reps); }); ab.id = "addCustom"; cu.appendChild(ab);
+card.appendChild(cu);
+body.appendChild(card);
+}
+function renderTeam(){
+var C = calendar(), T = team();
+$("teamLabel").textContent = "Team reps · counts toward goal";
+$("total").textContent = fmt(T.counted); fitTotal();
+if(!T.people){
+$("goaltxt").textContent = "No one has joined yet.";
+$("fill").style.width = "0%"; $("pacetxt").textContent = ""; $("pacetxt").className = "pacetxt"; $("extratxt").textContent = ""; $("splittxt").textContent = "";
+} else {
+$("goaltxt").textContent = "of " + fmt(T.goal) + " team goal · " + T.people + (T.people === 1 ? " person" : " people");
+$("fill").style.width = Math.min(100, T.counted / T.goal * 100) + "%";
+$("pace").style.left = "calc(" + (C.day / C.dim * 100) + "% - 1px)";
+var diff = Math.round(T.counted - T.goal * C.day / C.dim), p = $("pacetxt");
+var need = Math.ceil(Math.max(0, T.goal - T.counted) / C.left);
+if(T.counted >= T.goal){ p.textContent = "Team goal reached. Everyone is at 100%."; p.className = "pacetxt ahead"; }
+else if(diff >= 0){ p.textContent = fmt(diff) + " ahead of pace · team needs " + fmt(need) + " a day"; p.className = "pacetxt ahead"; }
+else { p.textContent = fmt(-diff) + " behind pace · team needs " + fmt(need) + " a day"; p.className = "pacetxt behind"; }
+$("extratxt").textContent = T.atGoal + " of " + T.people + " at goal" + (T.extra ? " · " + fmt(T.extra) + " extra reps not counted" : "");
+$("splittxt").textContent = "Push-ups " + fmt(T.by.pushups) + " · Sit-ups " + fmt(T.by.situps);
+}
+var b = $("board"); b.innerHTML = "";
+var names = T.names.slice().sort(function(a,b2){ return pCounted(b2) - pCounted(a) || pRaw(b2) - pRaw(a) || a.localeCompare(b2); });
+$("boardHint").hidden = !names.length;
+if(!names.length) b.appendChild(el("li", "empty", "No one yet. Add your name on the Add tab."));
+names.forEach(function(k, i){ b.appendChild(personRow(k, i + 1, false)); });
+var ob = $("outBoard"); ob.innerHTML = "";
+var outs = outNames(); $("outSection").hidden = !outs.length;
+outs.forEach(function(k){ ob.appendChild(personRow(k, "–", true)); });
+var f = $("feed"); f.innerHTML = "";
+var recent = logAll.slice(-6).reverse();
+if(!recent.length) f.appendChild(el("li", "empty", "Nothing yet. Each add shows up here for everyone."));
+recent.forEach(function(x){
+var li = el("li"), w = el("span", "what"); w.appendChild(el("b", "", x.name)); w.appendChild(document.createTextNode(" +" + x.n + " " + UNIT[x.ex]));
+li.appendChild(w); li.appendChild(el("span", "ago", ago(x.t))); f.appendChild(li);
+});
+}
+function personRow(k, rank, isOutRow){
+var g = pGoal(k), c = pCounted(k), raw = pRaw(k);
+var li = el("li", "row" + (k === me ? " me" : "") + (isOutRow ? " outrow" : ""));
+li.setAttribute("role", "button"); li.tabIndex = 0;
+li.setAttribute("aria-label", k + ", " + raw + " reps. Open plan.");
+li.appendChild(el("span", "rank", String(rank)));
+var nm = el("span", "nm", k); nm.appendChild(el("span", "tag", exTag(k))); li.appendChild(nm);
+li.appendChild(el("span", "pc" + (c >= g ? " atgoal" : ""), isOutRow ? "out" : Math.floor(c / g * 100) + "%"));
+li.appendChild(el("span", "ct", fmt(raw)));
+if(memberEx(k).length > 1) li.appendChild(el("div", "split", "Push-ups " + fmt(cnt(k, "pushups")) + " · Sit-ups " + fmt(cnt(k, "situps"))));
+var bar = el("div", "bar"), inner = el("i"); inner.style.width = Math.min(100, c / g * 100) + "%"; bar.appendChild(inner); li.appendChild(bar);
+li.addEventListener("click", function(){ openSheet(k); });
+li.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openSheet(k); } });
+return li;
+}
+function renderMe(){
+var body = $("meBody"); body.innerHTML = "";
+if(!me || !memberEx(me).length){
+var c = el("div", "card");
+c.appendChild(el("div", "", !me ? "Pick your name first and your plan shows up here." : "Join an exercise on the Add tab to see your plan."));
+c.appendChild(btn("add", "Go to Add", function(){ setTab("add"); }));
+body.appendChild(c); return;
+}
+if(personOut(me)) body.appendChild(el("p", "note", "You're marked out, so you aren't counted toward the team goal."));
+body.appendChild(buildPlan(me));
+}
+function renderSheet(){
+if(!sheetName || $("sheet").hidden) return;
+var b = $("sheetBody"); b.innerHTML = "";
+var k = sheetName;
+if(personOut(k)) b.appendChild(el("p", "note", "Marked out. Not counted toward the team goal."));
+b.appendChild(buildPlan(k));
+var a = el("div", "actions");
+if(personOut(k)){
+a.appendChild(btn("add solid", "Bring back", function(){ sheetConfirm = ""; setPersonOut(k, false); }));
+} else {
+var armed = sheetConfirm === "out";
+a.appendChild(btn("danger" + (armed ? " armed" : ""), armed ? "Tap again to mark out" : "Mark as out", function(){
+if(sheetConfirm === "out"){ sheetConfirm = ""; setPersonOut(k, true); } else { sheetConfirm = "out"; renderSheet(); }
+}));
+if(armed) a.appendChild(el("p", "hint", "They stop counting toward the team goal, and the goal drops by their share."));
+}
+if(pRaw(k) === 0){
+var ra = sheetConfirm === "remove";
+a.appendChild(btn("danger" + (ra ? " armed" : ""), ra ? "Tap again to remove" : "Remove this name", function(){
+if(sheetConfirm === "remove"){ sheetConfirm = ""; closeSheet(); dropPerson(k); } else { sheetConfirm = "remove"; renderSheet(); }
+}));
+}
+b.appendChild(a);
+}
+function render(){
+var C = calendar(), d = new Date();
+$("month").textContent = d.toLocaleString(undefined, {month:"long", year:"numeric"});
+$("left").textContent = C.left + (C.left === 1 ? " day left" : " days left");
+document.querySelectorAll("#seg button").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-ex") === ex ? "true" : "false"); });
+$("seg").hidden = (tab !== "add");
+renderAdd(); renderTeam(); renderMe(); renderSheet();
+}
+function refresh(){
+if(busy){ again = true; return; }
+busy = true;
+fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; render(); setStatus("live"); })
+.catch(function(){ setStatus("off"); })
+.then(function(){ busy = false; if(again){ again = false; refresh(); } });
+}
+function toast(msg, withUndo){
+clearTimeout(toastTimer);
+$("toastMsg").textContent = msg; $("toastBtn").hidden = !withUndo; $("toast").hidden = false;
+toastTimer = setTimeout(function(){ $("toast").hidden = true; last = null; }, 8000);
+}
+function joinNew(){
+var typed = cleanName(draft.name);
+if(!typed){ toast("Type your name first.", false); return; }
+var chosen = EXS.filter(function(e){ return draft[e]; });
+if(!chosen.length) chosen = [ex];
+var name = findName(typed) || typed;
+me = name; store.set("pu_name", me); changingName = false; draft = { name:"", pushups:false, situps:false };
+chosen.forEach(function(e){ if(!isMember(name, e)) setRoster(e, name, false); });
+render();
+}
+function add(n){
+n = Math.floor(Number(n));
+if(!me || !isMember(me, ex) || isOut(me, ex)){ return; }
+if(!(n > 0 && n <= 1000)){ toast("Enter a number from 1 to 1,000.", false); return; }
+var mk = monthKey(), e = ex, name = me, entry = { n:n, name:name, ex:e, t:Date.now(), id:null };
+counts[e][name] = cnt(name, e) + n; logAll.push(entry); render();
+addLog(e, name, n, entry.t).then(function(id){
+entry.id = id;
+return bump(e, name, n, mk).then(function(){ last = {ex:e, key:name, n:n, id:id, mk:mk, entry:entry}; toast("+" + n + " " + UNIT[e] + " added", true); refresh(); })
+.catch(function(err){ removeLog(mk, id); throw err; });
+}).catch(function(){
+counts[e][name] = Math.max(0, cnt(name, e) - n);
+var i = logAll.indexOf(entry); if(i > -1) logAll.splice(i, 1);
+render(); toast("Couldn't save. Check your connection and try again.", false);
+});
+}
+function undo(){
+if(!last) return;
+var l = last; last = null; $("toast").hidden = true;
+counts[l.ex][l.key] = Math.max(0, cnt(l.key, l.ex) - l.n);
+var i = logAll.indexOf(l.entry); if(i > -1) logAll.splice(i, 1);
+render();
+bump(l.ex, l.key, -l.n, l.mk).then(function(){ return removeLog(l.mk, l.id); }).then(refresh)
+.catch(function(){ toast("Couldn't undo. Check your connection.", false); refresh(); });
+}
+function setReps(v){
+v = Math.floor(Number(v));
+if(!(v > 0)) v = 1; if(v > 1000) v = 1000;
+reps = v; store.set("pu_reps", String(v));
+var ci = $("custom"), ab = $("addCustom");
+if(ci) ci.value = v; if(ab) ab.textContent = "Add " + v;
+}
+function setEx(e){ ex = e; store.set("pu_ex", e); render(); }
+function setTab(t){
+if(["add","team","me","help"].indexOf(t) < 0) t = "add";
+tab = t;
+["add","team","me","help"].forEach(function(k){ $("tab-" + k).hidden = (k !== t); });
+document.querySelectorAll(".tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.getAttribute("data-tab") === t ? "true" : "false"); });
+$("seg").hidden = (t !== "add");
+try{ history.replaceState(null, "", "#" + t); }catch(e){}
+window.scrollTo(0, 0);
+if(t === "team") fitTotal();
+}
+function openSheet(name){ sheetName = name; sheetConfirm = ""; $("sheet").hidden = false; renderSheet(); $("sheetClose").focus(); }
+function closeSheet(){ sheetName = ""; sheetConfirm = ""; $("sheet").hidden = true; }
+document.querySelectorAll(".tabs button").forEach(function(b){
+b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); });
+});
+document.querySelectorAll("#seg button").forEach(function(b){
+b.addEventListener("click", function(){ setEx(b.getAttribute("data-ex")); });
+});
+$("toastBtn").addEventListener("click", undo);
+$("sheetClose").addEventListener("click", closeSheet);
+$("sheet").addEventListener("click", function(e){ if(e.target === $("sheet")) closeSheet(); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !$("sheet").hidden) closeSheet(); });
+window.addEventListener("hashchange", function(){ setTab(location.hash.replace("#","")); });
+window.addEventListener("resize", fitTotal);
+try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitTotal); }catch(e){}
+setTab(location.hash.replace("#","") || "add");
+render(); setStatus(""); refresh();
+try{
+var es1 = new EventSource(DB + "/counts.json"); es1.addEventListener("put", refresh); es1.addEventListener("patch", refresh);
+var es2 = new EventSource(DB + "/roster.json"); es2.addEventListener("put", refresh); es2.addEventListener("patch", refresh);
+}catch(e){}
+setInterval(refresh, 20000);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) refresh(); });
 })();
 </script>
 </body>
