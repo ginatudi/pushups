@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Push-Up Counter</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Push-Ups">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#EDEFF0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1014" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" id="touchIcon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one phone-height column. Big team total on top, add buttons in thumb reach, leaderboard below. */
+:root{
+  --bg:#EDEFF0; --surface:#FFFFFF; --ink:#12161B; --muted:#5C6670; --line:#D5DADE;
+  --accent:#2340E6; --accent-ink:#FFFFFF; --good:#16794A; --warn:#B45309;
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
+    --accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1014; --surface:#171B21; --ink:#F1F3F5; --muted:#9AA4AE; --line:#272D35;
+  --accent:#7C93FF; --accent-ink:#0D1014; --good:#4ADE9A; --warn:#F5A524; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.4;
+  -webkit-text-size-adjust:100%; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  padding-top:max(18px, env(safe-area-inset-top, 0px));
+  padding-bottom:max(24px, env(safe-area-inset-bottom, 0px));
+  padding-left:max(18px, env(safe-area-inset-left, 0px));
+  padding-right:max(18px, env(safe-area-inset-right, 0px));
+}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px;min-height:calc(100dvh - 42px)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.month{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.left{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+
+.hero{display:flex;flex-direction:column;gap:6px}
+.label{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.total{font-family:var(--display);font-weight:700;font-size:clamp(104px,36vw,176px);line-height:.85;letter-spacing:-.01em;font-variant-numeric:tabular-nums;margin:2px 0 4px}
+.sub{color:var(--muted);font-variant-numeric:tabular-nums}
+.track{position:relative;height:14px;border-radius:7px;background:var(--line);margin-top:8px;overflow:visible}
+.fill{height:100%;width:0;border-radius:7px;background:var(--accent);transition:width .5s ease}
+.pace{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink);opacity:.55;left:0}
+.pacetxt{font-size:14px;font-variant-numeric:tabular-nums}
+.pacetxt.ahead{color:var(--good)} .pacetxt.behind{color:var(--warn)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.who b{font-weight:700}
+.link{background:none;border:0;color:var(--accent);font:inherit;padding:6px 2px;min-height:44px;cursor:pointer}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button.q{min-height:56px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:28px;cursor:pointer}
+button.q:active{transform:scale(.97)}
+.custom{display:flex;gap:10px}
+input[type=number],input[type=text]{flex:1;min-width:0;height:52px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px;font:inherit;font-size:18px}
+button.add{height:52px;padding:0 22px;border-radius:12px;border:2px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.board{display:flex;flex-direction:column;gap:12px;padding:0;margin:0;list-style:none}
+.row{display:grid;grid-template-columns:22px 1fr auto;gap:4px 10px;align-items:center}
+.rank{color:var(--muted);font-variant-numeric:tabular-nums;font-size:14px}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.row.me .nm::after{content:" (you)";font-weight:400;color:var(--muted)}
+.ct{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.bar{grid-column:2 / 4;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);opacity:.75;border-radius:3px;transition:width .5s ease}
+.empty{color:var(--muted)}
+
+.status{margin-top:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding-top:4px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.live{background:var(--good)} .dot.off{background:var(--warn)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px, env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:5;max-width:calc(100% - 36px)}
+.toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
+@media (prefers-reduced-motion:reduce){.fill,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="month" id="month">This month</div>
+    <div class="left" id="left"></div>
+  </div>
+
+  <section class="hero" aria-live="polite">
+    <div class="label">Team push-ups</div>
+    <div class="total" id="total">0</div>
+    <div class="sub" id="goaltxt"></div>
+    <div class="track" aria-hidden="true"><div class="fill" id="fill"></div><div class="pace" id="pace"></div></div>
+    <div class="pacetxt" id="pacetxt"></div>
+  </section>
+
+  <section class="card" id="whoCard">
+    <div id="nameForm" hidden>
+      <label class="label" for="nameInput">Your name</label>
+      <div class="custom" style="margin-top:8px">
+        <input type="text" id="nameInput" maxlength="20" autocomplete="given-name" placeholder="First name">
+        <button class="add" id="saveName" type="button">Save</button>
+      </div>
+    </div>
+    <div id="addForm" hidden>
+      <div class="who"><span>Adding as <b id="meName"></b></span><button class="link" id="changeName" type="button">Change</button></div>
+      <div class="quick">
+        <button class="q" type="button" data-n="5">+5</button>
+        <button class="q" type="button" data-n="10">+10</button>
+        <button class="q" type="button" data-n="20">+20</button>
+        <button class="q" type="button" data-n="25">+25</button>
+      </div>
+      <div class="custom">
+        <input type="number" id="custom" inputmode="numeric" min="1" max="1000" placeholder="Other amount">
+        <button class="add" id="addCustom" type="button">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label" style="margin-bottom:12px">Leaderboard</div>
+    <ul class="board" id="board"></ul>
+  </section>
+
+  <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Connecting…</span></div>
+</div>
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastBtn" type="button" hidden>Undo</button></div>
+
+<script>
+/* ---------- Settings you may want to change ---------- */
+var CONFIG = {
+  DB_URL: "https://pushups-2a3c6-default-rtdb.firebaseio.com",
+  GOAL: 1500    // team goal for the month
+};
+/* ----------------------------------------------------- */
+(function(){
+  try{
+    var ic = document.createElement("canvas"); ic.width = ic.height = 180;
+    var x = ic.getContext("2d"); x.fillStyle = "#2340E6"; x.fillRect(0,0,180,180); x.fillStyle = "#fff";
+    x.beginPath(); x.moveTo(90,34); x.lineTo(142,92); x.lineTo(110,92); x.lineTo(110,146); x.lineTo(70,146); x.lineTo(70,92); x.lineTo(38,92); x.closePath(); x.fill();
+    document.getElementById("touchIcon").href = ic.toDataURL("image/png");
+  }catch(e){}
+})();
+(function(){
+  var DB = CONFIG.DB_URL.replace(/\/+$/, "");
+  var $ = function(id){ return document.getElementById(id); };
+  var store = {
+    get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+  var counts = {}, me = store.get("pu_name") || "", last = null, toastTimer = null, busy = false, again = false;
+
+  function monthKey(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+  function cleanName(s){ return s.replace(/[.$#\[\]\/]/g,"").replace(/\s+/g," ").trim().slice(0,20); }
+  function fmt(n){ return n.toLocaleString(); }
+
+  function fetchCounts(){
+    if(!DB){
+      try{ return Promise.resolve(JSON.parse(store.get("pu_local_"+monthKey()) || "{}")); }catch(e){ return Promise.resolve({}); }
+    }
+    return fetch(DB + "/pushups/" + monthKey() + ".json").then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function(j){ return j || {}; });
+  }
+  function bump(key, n){
+    if(!DB){
+      return fetchCounts().then(function(c){
+        c[key] = Math.max(0, (c[key]||0) + n);
+        store.set("pu_local_"+monthKey(), JSON.stringify(c));
+      });
+    }
+    return fetch(DB + "/pushups/" + monthKey() + "/" + encodeURIComponent(key) + ".json", {
+      method:"PUT", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({".sv":{"increment":n}})
+    }).then(function(r){ if(!r.ok) throw new Error(r.status); });
+  }
+
+  function setStatus(kind){
+    var dot = $("dot"), t = $("statusTxt");
+    dot.className = "dot " + (kind === "live" ? "live" : kind === "off" ? "off" : "");
+    t.textContent = kind === "live" ? "Live. Everyone sees the same total."
+      : kind === "off" ? "Can't reach the shared counter. Retrying…"
+      : "Test mode: counts stay on this phone until the database is connected.";
+  }
+
+  function render(){
+    var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), day = d.getDate();
+    $("month").textContent = d.toLocaleString(undefined, {month:"long", year:"numeric"});
+    var daysLeft = dim - day + 1;
+    $("left").textContent = daysLeft + (daysLeft === 1 ? " day left" : " days left");
+
+    var names = Object.keys(counts).filter(function(k){ return typeof counts[k] === "number" && counts[k] > 0; });
+    names.sort(function(a,b){ return counts[b] - counts[a] || a.localeCompare(b); });
+    var total = names.reduce(function(s,k){ return s + counts[k]; }, 0);
+    $("total").textContent = fmt(total);
+    $("goaltxt").textContent = "of " + fmt(CONFIG.GOAL) + " goal";
+    $("fill").style.width = Math.min(100, total / CONFIG.GOAL * 100) + "%";
+    var expected = CONFIG.GOAL * day / dim;
+    $("pace").style.left = "calc(" + Math.min(100, day / dim * 100) + "% - 1px)";
+    var diff = Math.round(total - expected), p = $("pacetxt");
+    if(total >= CONFIG.GOAL){ p.textContent = "Goal reached."; p.className = "pacetxt ahead"; }
+    else if(diff >= 0){ p.textContent = fmt(diff) + " ahead of pace"; p.className = "pacetxt ahead"; }
+    else { p.textContent = fmt(-diff) + " behind pace"; p.className = "pacetxt behind"; }
+
+    var b = $("board"); b.innerHTML = "";
+    if(!names.length){
+      var li = document.createElement("li"); li.className = "empty";
+      li.textContent = "No push-ups logged yet this month. Be the first.";
+      b.appendChild(li);
+    }
+    var top = names.length ? counts[names[0]] : 1;
+    names.forEach(function(k,i){
+      var li = document.createElement("li"); li.className = "row" + (k === me ? " me" : "");
+      var r = document.createElement("span"); r.className = "rank"; r.textContent = i+1;
+      var n = document.createElement("span"); n.className = "nm"; n.textContent = k;
+      var c = document.createElement("span"); c.className = "ct"; c.textContent = fmt(counts[k]);
+      var bar = document.createElement("div"); bar.className = "bar";
+      var inner = document.createElement("i"); inner.style.width = (counts[k] / top * 100) + "%"; bar.appendChild(inner);
+      li.appendChild(r); li.appendChild(n); li.appendChild(c); li.appendChild(bar);
+      b.appendChild(li);
+    });
+
+    $("nameForm").hidden = !!me && !$("nameForm").dataset.open;
+    $("addForm").hidden = !me || !!$("nameForm").dataset.open;
+    $("meName").textContent = me;
+  }
+
+  function refresh(){
+    if(busy){ again = true; return; }
+    busy = true;
+    fetchCounts().then(function(c){ counts = c; render(); setStatus(DB ? "live" : "test"); })
+      .catch(function(){ setStatus("off"); })
+      .then(function(){ busy = false; if(again){ again = false; refresh(); } });
+  }
+
+  function toast(msg, withUndo){
+    clearTimeout(toastTimer);
+    $("toastMsg").textContent = msg; $("toastBtn").hidden = !withUndo; $("toast").hidden = false;
+    toastTimer = setTimeout(function(){ $("toast").hidden = true; last = null; }, 8000);
+  }
+
+  function add(n){
+    n = Math.floor(Number(n));
+    if(!me){ showNameForm(); return; }
+    if(!(n > 0 && n <= 1000)){ toast("Enter a number from 1 to 1,000.", false); return; }
+    counts[me] = (counts[me]||0) + n; render();
+    bump(me, n).then(function(){ last = {key:me, n:n}; toast("+" + n + " added", true); })
+      .catch(function(){ counts[me] = Math.max(0,(counts[me]||0) - n); render(); toast("Couldn't save. Check your connection and try again.", false); });
+  }
+  function undo(){
+    if(!last) return;
+    var l = last; last = null; $("toast").hidden = true;
+    counts[l.key] = Math.max(0,(counts[l.key]||0) - l.n); render();
+    bump(l.key, -l.n).catch(function(){ toast("Couldn't undo. Check your connection.", false); refresh(); });
+  }
+
+  function showNameForm(){
+    $("nameForm").dataset.open = "1"; $("nameInput").value = me; render(); $("nameInput").focus();
+  }
+  function saveName(){
+    var v = cleanName($("nameInput").value);
+    if(!v) return;
+    me = v; store.set("pu_name", me); delete $("nameForm").dataset.open; render();
+  }
+
+  document.querySelectorAll("button.q").forEach(function(btn){
+    btn.addEventListener("click", function(){ add(btn.getAttribute("data-n")); });
+  });
+  $("addCustom").addEventListener("click", function(){ add($("custom").value); $("custom").value = ""; });
+  $("custom").addEventListener("keydown", function(e){ if(e.key === "Enter"){ add($("custom").value); $("custom").value = ""; } });
+  $("changeName").addEventListener("click", showNameForm);
+  $("saveName").addEventListener("click", saveName);
+  $("nameInput").addEventListener("keydown", function(e){ if(e.key === "Enter") saveName(); });
+  $("toastBtn").addEventListener("click", undo);
+
+  render(); setStatus(DB ? "" : "test"); refresh();
+  if(DB){
+    try{
+      var es = new EventSource(DB + "/pushups.json");
+      es.addEventListener("put", refresh); es.addEventListener("patch", refresh);
+    }catch(e){}
+    setInterval(refresh, 20000);
+  }
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) refresh(); });
+})();
+</script>
+</body>
+</html>
