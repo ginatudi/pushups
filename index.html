@@ -168,7 +168,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 .toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
 @media (prefers-reduced-motion:reduce){.fill,.bar i{transition:none}}
 .more{margin:0}.more summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600;padding:6px 0}.more>*:not(summary){margin-top:8px}
-:root:root:root{--bg:#0A0710;--surface:#16101F;--ink:#F5F1FA;--muted:#A89BB8;--line:#2A2038;--accent:#A78BFA;--accent-ink:#0A0710;--accent2:#E879F9;--good:#4ADE9A;--warn:#F472B6;color-scheme:dark}
+:root:root:root{--bg:#0A0710;--surface:#16101F;--ink:#F5F1FA;--muted:#A89BB8;--line:#2A2038;--accent:#7C93FF;--accent-ink:#0A0710;--accent2:#A78BFA;--good:#4ADE9A;--warn:#C084FC;color-scheme:dark}
 </style>
 </head>
 <body>
@@ -298,7 +298,7 @@ GOALS: { pushups: 2000, situps: 2000 }
 (function(){
 try{
 var ic = document.createElement("canvas"); ic.width = ic.height = 180;
-var x = ic.getContext("2d"); x.fillStyle = "#6D28D9"; x.fillRect(0,0,180,180); x.fillStyle = "#fff";
+var x = ic.getContext("2d"); x.fillStyle = "#3B54D9"; x.fillRect(0,0,180,180); x.fillStyle = "#fff";
 x.beginPath(); x.moveTo(90,34); x.lineTo(142,92); x.lineTo(110,92); x.lineTo(110,146); x.lineTo(70,146); x.lineTo(70,92); x.lineTo(38,92); x.closePath(); x.fill();
 document.getElementById("touchIcon").href = ic.toDataURL("image/png");
 }catch(e){}
@@ -739,7 +739,7 @@ render();
 var PEP = ["Comeback season starts now.","One set at a time. You have got this.","The best rep is the next one.","Small sets add up fast.","Plot twist: you are about to catch up."];
 var CHEERS = ["Nice work","Strong set","That counts","Keep rolling","Look at you go","Every rep adds up"];
 function confetti(big){
-var box = el("div", "confetti"), cols = ["#FF4D6D","#FFC300","#2EC4B6","#A78BFA","#E879F9","#A06CD5"], N = big ? 90 : 45;
+var box = el("div", "confetti"), cols = ["#7C93FF","#A78BFA","#60A5FA","#C084FC","#4ADE9A","#818CF8"], N = big ? 90 : 45;
 for(var i = 0; i < N; i++){ var p = el("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDuration = (1.8 + Math.random() * 1.8) + "s"; p.style.animationDelay = (Math.random() * 0.5) + "s"; p.style.transform = "rotate(" + Math.random() * 360 + "deg)"; box.appendChild(p); }
 document.body.appendChild(box); setTimeout(function(){ box.remove(); }, 4500);
 }
