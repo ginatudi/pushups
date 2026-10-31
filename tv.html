@@ -82,7 +82,7 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:3vw;bor
 .total{font-size:min(40vw,20vh)}
 }
 #extra,#split{display:none}
-:root:root:root{--bg:#0A0710;--surface:#16101F;--ink:#F5F1FA;--muted:#A89BB8;--line:#2A2038;--accent:#A78BFA;--accent-ink:#0A0710;--accent2:#E879F9;--good:#4ADE9A;--warn:#F472B6;color-scheme:dark}
+:root:root:root{--bg:#0A0710;--surface:#16101F;--ink:#F5F1FA;--muted:#A89BB8;--line:#2A2038;--accent:#7C93FF;--accent-ink:#0A0710;--accent2:#A78BFA;--good:#4ADE9A;--warn:#C084FC;color-scheme:dark}
 </style>
 </head>
 <body>
@@ -170,7 +170,7 @@ return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: {
 });
 }
 function confetti(big){
-var box = document.createElement("div"); box.className = "confetti"; var cols = ["#FF4D6D","#FFC300","#2EC4B6","#A78BFA","#E879F9","#A06CD5"], N = big ? 140 : 70;
+var box = document.createElement("div"); box.className = "confetti"; var cols = ["#7C93FF","#A78BFA","#60A5FA","#C084FC","#4ADE9A","#818CF8"], N = big ? 140 : 70;
 for(var i = 0; i < N; i++){ var p = document.createElement("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDuration = (2 + Math.random() * 2) + "s"; p.style.animationDelay = (Math.random() * 0.8) + "s"; p.style.transform = "rotate(" + Math.random() * 360 + "deg)"; box.appendChild(p); }
 document.body.appendChild(box); setTimeout(function(){ box.remove(); }, 6000);
 }
