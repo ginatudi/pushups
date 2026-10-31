@@ -137,6 +137,17 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 .split{grid-column:2 / 5;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .tag{margin-left:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .actions{display:flex;flex-direction:column;gap:8px}
+.pill{align-self:flex-start;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;font-weight:600}
+.pill:empty{display:none}
+.pill.win{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bar{position:relative}
+.tick{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5}
+.pc.behind{color:var(--warn)}
+.streak{font-size:14px;font-weight:600;color:var(--good)}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.confetti i{position:absolute;top:-16px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}}
 .help{display:flex;flex-direction:column;gap:14px}
 .help h2{margin:0;font-size:18px}
 .help p,.help li{margin:0;font-size:15px;line-height:1.5}
@@ -180,11 +191,14 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <div class="pacetxt" id="pacetxt"></div>
 <div class="hint" id="extratxt"></div>
 <div class="hint" id="splittxt"></div>
+<div class="pill" id="todaytxt"></div>
+<div class="pill" id="miletxt"></div>
+<div class="hint" id="nudge"></div>
 </section>
 <section>
 <div class="label" style="margin-bottom:10px">Leaderboard</div>
 <ul class="board" id="board"></ul>
-<div class="hint" id="boardHint" style="margin-top:10px">Tap a name to see their plan.</div>
+<div class="hint" id="boardHint" style="margin-top:10px">Tap a name to see their plan. The tick on each bar marks an even pace.</div>
 </section>
 <section id="outSection" hidden>
 <div class="label" style="margin-bottom:6px">Out (not counted toward the team)</div>
@@ -228,6 +242,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <li>The team is at 100% only when everyone is at 100% of their own goal.</li>
 <li>Extra reps past your goal are a bonus. They show on your own total but don't count toward the team.</li>
 <li>Each person who joins adds their goal to the team goal.</li>
+<li>The tick on each bar marks an even pace. Behind it? A small push each day catches you up.</li>
 </ul>
 </div>
 <div class="card help">
@@ -344,6 +359,12 @@ for(var i = 0; i < names.length; i++) if(names[i].toLowerCase() === t) return na
 return null;
 }
 function exTag(name){ var m = memberEx(name); return m.length > 1 ? "Both" : m.length ? LABEL[m[0]] : ""; }
+function expectedPct(){ var C = calendar(); return C.day / C.dim; }
+function isBehind(name){ var g = pGoal(name), C = calendar(); return pCounted(name) < g && Math.round(pCounted(name) - g * C.day / C.dim) <= -Math.max(5, Math.round(g / C.dim)); }
+function todayStats(){ var d = new Date().toDateString(), reps = 0, who = {}, big = null; logAll.forEach(function(x){ if(new Date(x.t).toDateString() === d && isMember(x.name, x.ex)){ reps += x.n; who[x.name] = 1; if(!big || x.n > big.n) big = x; } }); return { reps: reps, people: Object.keys(who).length, big: big }; }
+function streak(name){ var days = {}; logAll.forEach(function(x){ if(x.name === name) days[new Date(x.t).getDate()] = 1; }); var d = calendar().day, n = 0; if(!days[d]) d--; while(d >= 1 && days[d]){ n++; d--; } return n; }
+var MILES = [[25,"A quarter of the way there. Great start."],[50,"Halfway! The team is on a roll."],[75,"Three quarters done. The finish line is in sight."],[100,"Team goal reached! Everybody did it."]];
+function mileLevel(pct){ var l = 0; MILES.forEach(function(m, i){ if(pct >= m[0]) l = i + 1; }); return l; }
 function team(){
 var names = activeNames(), goal = 0, counted = 0, raw = 0, atGoal = 0, by = { pushups: 0, situps: 0 };
 names.forEach(function(k){
@@ -417,7 +438,7 @@ else if(c === 0) P.msg = "Fresh start. " + fmt(need) + " today gets " + poss + "
 else if(C.left === 1) P.msg = "Last day. " + fmt(rem) + " to finish the challenge.";
 else if(need > 0 && toGo === 0) P.msg = "Today's target is done. " + fmt(need) + " a day keeps " + poss + " on track for the month.";
 else if(diff >= 0) P.msg = first + " " + fmt(diff) + " ahead of an even pace. " + fmt(need) + " a day keeps it that way.";
-else P.msg = first + " " + fmt(-diff) + " behind an even pace, and " + fmt(need) + " a day still gets " + poss + " there.";
+else P.msg = first + " " + fmt(-diff) + " behind an even pace, and " + fmt(need) + " a day still gets " + poss + " there. " + PEP[(C.day + name.length) % PEP.length];
 return P;
 }
 function buildPlan(name){
@@ -544,6 +565,7 @@ tb.appendChild(row);
 var tr = el("div", "track"), fl = el("div", "fill"); fl.style.width = (P.done ? 100 : Math.min(100, P.need ? P.d / P.need * 100 : 100)) + "%"; tr.appendChild(fl); tb.appendChild(tr);
 card.appendChild(tb);
 card.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), P.msg));
+var sk = streak(me); if(sk >= 2) card.appendChild(el("div", "streak", sk + "-day streak. Keep it going!"));
 card.appendChild(el("div", "label", "Logging " + LABEL[ex]));
 var quick = el("div", "quick");
 [5, 10, 20, 25].forEach(function(n){ quick.appendChild(btn("q", "+" + n, function(){ add(n); })); });
@@ -566,7 +588,7 @@ $("teamLabel").textContent = "Team reps · counts toward goal";
 $("total").textContent = fmt(T.counted); fitTotal();
 if(!T.people){
 $("goaltxt").textContent = "No one has joined yet.";
-$("fill").style.width = "0%"; $("pacetxt").textContent = ""; $("pacetxt").className = "pacetxt"; $("extratxt").textContent = ""; $("splittxt").textContent = "";
+$("fill").style.width = "0%"; $("pacetxt").textContent = ""; $("pacetxt").className = "pacetxt"; $("extratxt").textContent = ""; $("splittxt").textContent = ""; $("todaytxt").textContent = ""; $("miletxt").textContent = ""; $("nudge").textContent = "";
 } else {
 $("goaltxt").textContent = "of " + fmt(T.goal) + " team goal · " + T.people + (T.people === 1 ? " person" : " people");
 $("fill").style.width = Math.min(100, T.counted / T.goal * 100) + "%";
@@ -578,6 +600,11 @@ else if(diff >= 0){ p.textContent = fmt(diff) + " ahead of pace · team needs " 
 else { p.textContent = fmt(-diff) + " behind pace · team needs " + fmt(need) + " a day"; p.className = "pacetxt behind"; }
 $("extratxt").textContent = T.atGoal + " of " + T.people + " at goal" + (T.extra ? " · " + fmt(T.extra) + " extra reps not counted" : "");
 $("splittxt").textContent = "Push-ups " + fmt(T.by.pushups) + " · Sit-ups " + fmt(T.by.situps);
+var ts = todayStats(), lvl = mileLevel(T.counted / T.goal * 100), nextM = MILES[lvl], mt = $("miletxt");
+$("todaytxt").textContent = ts.reps ? "Today: " + fmt(ts.reps) + " reps from " + ts.people + (ts.people === 1 ? " person" : " people") + (ts.big && ts.big.n >= 20 ? ". Biggest set: " + ts.big.name + " +" + ts.big.n : "") : "No reps logged today yet. Be the first!";
+if(nextM){ mt.textContent = (lvl ? MILES[lvl - 1][1] + " " : "") + "Next: " + nextM[0] + "% in " + fmt(Math.ceil(T.goal * nextM[0] / 100 - T.counted)) + " reps"; mt.className = "pill"; } else { mt.textContent = MILES[3][1]; mt.className = "pill win"; }
+var behind = T.names.filter(isBehind);
+$("nudge").textContent = behind.length ? behind.slice(0, 3).join(", ") + (behind.length > 3 ? " and " + (behind.length - 3) + " more" : "") + " could use a cheer. The team is strongest when everyone is on pace." : "Everyone is on pace. Keep it up!";
 }
 var b = $("board"); b.innerHTML = "";
 var names = T.names.slice().sort(function(a,b2){ return pCounted(b2) - pCounted(a) || pRaw(b2) - pRaw(a) || a.localeCompare(b2); });
@@ -602,10 +629,10 @@ li.setAttribute("role", "button"); li.tabIndex = 0;
 li.setAttribute("aria-label", k + ", " + raw + " reps. Open plan.");
 li.appendChild(el("span", "rank", String(rank)));
 var nm = el("span", "nm", k); nm.appendChild(el("span", "tag", exTag(k))); li.appendChild(nm);
-li.appendChild(el("span", "pc" + (c >= g ? " atgoal" : ""), isOutRow ? "out" : Math.floor(c / g * 100) + "%"));
+li.appendChild(el("span", "pc" + (c >= g ? " atgoal" : (!isOutRow && isBehind(k) ? " behind" : "")), isOutRow ? "out" : Math.floor(c / g * 100) + "%"));
 li.appendChild(el("span", "ct", fmt(raw)));
 if(memberEx(k).length > 1) li.appendChild(el("div", "split", "Push-ups " + fmt(cnt(k, "pushups")) + " · Sit-ups " + fmt(cnt(k, "situps"))));
-var bar = el("div", "bar"), inner = el("i"); inner.style.width = Math.min(100, c / g * 100) + "%"; bar.appendChild(inner); li.appendChild(bar);
+var bar = el("div", "bar"), inner = el("i"); inner.style.width = Math.min(100, c / g * 100) + "%"; bar.appendChild(inner); if(!isOutRow){ var tk = el("b", "tick"); tk.style.left = (expectedPct() * 100) + "%"; bar.appendChild(tk); } li.appendChild(bar);
 li.addEventListener("click", function(){ openSheet(k); });
 li.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openSheet(k); } });
 return li;
@@ -677,10 +704,18 @@ document.querySelectorAll("#seg button").forEach(function(b){ b.setAttribute("ar
 $("seg").hidden = (tab !== "add");
 renderAdd(); renderTeam(); renderMe(); renderSheet();
 }
+function celebrate(){
+var T = team(); if(!T.people) return;
+var lvl = mileLevel(T.counted / T.goal * 100), key = "pu_mile_" + monthKey(), seen = store.get(key);
+if(seen === null){ store.set(key, String(lvl)); return; }
+seen = parseInt(seen, 10);
+if(lvl > seen){ store.set(key, String(lvl)); toast("Team milestone! " + MILES[lvl - 1][0] + "%. " + MILES[lvl - 1][1], false); confetti(true); }
+else if(lvl < seen){ store.set(key, String(lvl)); }
+}
 function refresh(){
 if(busy){ again = true; return; }
 busy = true;
-fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; render(); setStatus("live"); })
+fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; render(); celebrate(); setStatus("live"); })
 .catch(function(){ setStatus("off"); })
 .then(function(){ busy = false; if(again){ again = false; refresh(); } });
 }
@@ -699,15 +734,24 @@ me = name; store.set("pu_name", me); changingName = false; draft = { name:"", pu
 chosen.forEach(function(e){ if(!isMember(name, e)) setRoster(e, name, false); });
 render();
 }
+var PEP = ["Comeback season starts now.","One set at a time. You have got this.","The best rep is the next one.","Small sets add up fast.","Plot twist: you are about to catch up."];
+var CHEERS = ["Nice work","Strong set","That counts","Keep rolling","Look at you go","Every rep adds up"];
+function confetti(big){
+var box = el("div", "confetti"), cols = ["#FF4D6D","#FFC300","#2EC4B6","#7C93FF","#FF9F1C","#A06CD5"], N = big ? 90 : 45;
+for(var i = 0; i < N; i++){ var p = el("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDuration = (1.8 + Math.random() * 1.8) + "s"; p.style.animationDelay = (Math.random() * 0.5) + "s"; p.style.transform = "rotate(" + Math.random() * 360 + "deg)"; box.appendChild(p); }
+document.body.appendChild(box); setTimeout(function(){ box.remove(); }, 4500);
+}
+function cheer(n, unit){ var tier = n >= 100 ? "ABSOLUTE LEGEND" : n >= 50 ? "BEAST MODE" : n >= 30 ? "Big set, big respect" : CHEERS[Math.floor(Math.random() * CHEERS.length)]; var msg = "+" + n + " " + unit + ". " + tier + "!"; if(pCounted(me) >= pGoal(me)) msg = "+" + n + " " + unit + ". You hit your goal! 🎉"; else if(n >= 50) msg += " 🔥"; return msg; }
 function add(n){
 n = Math.floor(Number(n));
 if(!me || !isMember(me, ex) || isOut(me, ex)){ return; }
 if(!(n > 0 && n <= 1000)){ toast("Enter a number from 1 to 1,000.", false); return; }
 var mk = monthKey(), e = ex, name = me, entry = { n:n, name:name, ex:e, t:Date.now(), id:null };
+var wasDone = pGoal(name) > 0 && pCounted(name) >= pGoal(name);
 counts[e][name] = cnt(name, e) + n; logAll.push(entry); render();
 addLog(e, name, n, entry.t).then(function(id){
 entry.id = id;
-return bump(e, name, n, mk).then(function(){ last = {ex:e, key:name, n:n, id:id, mk:mk, entry:entry}; toast("+" + n + " " + UNIT[e] + " added", true); refresh(); })
+return bump(e, name, n, mk).then(function(){ last = {ex:e, key:name, n:n, id:id, mk:mk, entry:entry}; toast(cheer(n, UNIT[e]), true); if(n >= 30 || (!wasDone && pCounted(name) >= pGoal(name))) confetti(n >= 100 || !wasDone); refresh(); })
 .catch(function(err){ removeLog(mk, id); throw err; });
 }).catch(function(){
 counts[e][name] = Math.max(0, cnt(name, e) - n);
