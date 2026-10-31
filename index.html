@@ -213,6 +213,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <li>Pick Push-ups or Sit-ups at the top, whichever you just did.</li>
 <li>Tap +5, +10, +20, or +25 after a set. For other amounts, use the + and − buttons and tap Add.</li>
 <li>Tapped by mistake? Tap Undo in the message that pops up. You have 8 seconds.</li>
+<li>Added too many earlier? Open the Me tab, find it under Your recent adds, and tap Remove.</li>
 </ol>
 </div>
 <div class="card help">
@@ -557,7 +558,7 @@ st.appendChild(btn("", "+", function(){ setReps(reps + (reps >= 25 ? 5 : 1)); })
 cu.appendChild(st);
 var ab = btn("add", "Add " + reps, function(){ setReps(ci.value); add(reps); }); ab.id = "addCustom"; cu.appendChild(ab);
 card.appendChild(cu);
-body.appendChild(card);
+body.appendChild(card); body.appendChild(btn("link", "Added too many? Fix a mistake", function(){ setTab("me"); }));
 }
 function renderTeam(){
 var C = calendar(), T = team();
@@ -618,7 +619,31 @@ c.appendChild(btn("add", "Go to Add", function(){ setTab("add"); }));
 body.appendChild(c); return;
 }
 if(personOut(me)) body.appendChild(el("p", "note", "You're marked out, so you aren't counted toward the team goal."));
-body.appendChild(buildPlan(me));
+body.appendChild(buildPlan(me)); body.appendChild(buildMine());
+}
+var removeArmed = "";
+function removeEntry(entry){
+var mk = monthKey(), e = entry.ex, name = entry.name;
+counts[e][name] = Math.max(0, cnt(name, e) - entry.n);
+var i = logAll.indexOf(entry); if(i > -1) logAll.splice(i, 1);
+removeArmed = ""; render();
+bump(e, name, -entry.n, mk).then(function(){ return removeLog(mk, entry.id); }).then(refresh)
+.catch(function(){ toast("Couldn't remove. Check your connection.", false); refresh(); });
+}
+function buildMine(){
+var box = el("div", "card");
+box.appendChild(el("h2", "", "Your recent adds"));
+box.appendChild(el("p", "muted", "Added too many by mistake? Remove it here and your total goes back down."));
+var mine = logAll.filter(function(x){ return x.name === me && isMember(me, x.ex); }).slice(-8).reverse();
+if(!mine.length){ box.appendChild(el("p", "muted", "Nothing added yet this month.")); return box; }
+var list = el("ul", "feed");
+mine.forEach(function(x){
+var li = el("li"), w = el("span", "what"); w.appendChild(el("b", "", "+" + x.n)); w.appendChild(document.createTextNode(" " + UNIT[x.ex] + " · " + ago(x.t)));
+var key = x.id || String(x.t), armed = removeArmed === key;
+var b = btn("link", armed ? "Tap again to remove" : "Remove", function(){ if(removeArmed === key){ removeEntry(x); } else { removeArmed = key; render(); } });
+li.appendChild(w); li.appendChild(b); list.appendChild(li);
+});
+box.appendChild(list); return box;
 }
 function renderSheet(){
 if(!sheetName || $("sheet").hidden) return;
