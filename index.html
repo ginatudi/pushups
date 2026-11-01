@@ -167,6 +167,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9;max-width:calc(100% - 36px)}
 .toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:32px}
 @media (prefers-reduced-motion:reduce){.fill,.bar i{transition:none}}
+.cheerbox{display:flex;flex-direction:column;gap:10px}.cheerbox textarea{width:100%;min-height:72px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;padding:12px;resize:none}
 .more{margin:0}.more summary{cursor:pointer;color:var(--accent);font-size:14px;font-weight:600;padding:6px 0}.more>*:not(summary){margin-top:8px}
 :root:root:root{--bg:#070A12;--surface:#0F1522;--ink:#F1F5FF;--muted:#93A1BC;--line:#222C42;--accent:#5B8CFF;--accent-ink:#070A12;--accent2:#8B6CFF;--good:#4ADE9A;--warn:#9D7BFF;color-scheme:dark}
 </style>
@@ -182,7 +183,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <button type="button" data-ex="situps" aria-pressed="false">Sit-ups</button>
 </div>
 <section class="panel" id="tab-add" role="tabpanel" aria-label="Add">
-<div id="addBody" class="panel"></div>
+<div id="cheerBox"></div><div id="addBody" class="panel"></div>
 </section>
 <section class="panel" id="tab-team" role="tabpanel" aria-label="Team" hidden>
 <section class="hero" aria-live="polite">
@@ -208,7 +209,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 </section>
 <section>
 <div class="label" style="margin-bottom:6px">Recent</div>
-<ul class="feed" id="feed"></ul>
+<ul class="feed" id="feed"></ul><div class="label" id="cheerLabel" style="margin:14px 0 6px" hidden>Cheers</div><ul class="feed" id="cheerFeed"></ul>
 </section>
 </section>
 <section class="panel" id="tab-me" role="tabpanel" aria-label="Me" hidden>
@@ -313,7 +314,7 @@ var store = {
 get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
 set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
-var counts = { pushups:{}, situps:{} }, roster = { pushups:{}, situps:{} }, logAll = [];
+var counts = { pushups:{}, situps:{} }, roster = { pushups:{}, situps:{} }, logAll = [], cheersAll = [];
 var me = store.get("pu_name") || "", ex = store.get("pu_ex"), last = null, toastTimer = null, busy = false, again = false;
 var tab = "add", sheetName = "", sheetConfirm = "", changingName = false;
 if(EXS.indexOf(ex) < 0) ex = "pushups";
@@ -384,9 +385,9 @@ getJSON(DB + "/log/" + mk + '.json?orderBy=%22%24key%22&limitToLast=1000').catch
 ]).then(function(a){
 var c = a[0] || {}, r = a[1] || {}, l = a[2] || {};
 var items = Object.keys(l).sort().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){
-return e && typeof e.n === "number" && typeof e.name === "string" && typeof e.t === "number" && EXS.indexOf(e.ex) > -1;
+return e && typeof e.n === "number" && typeof e.name === "string" && typeof e.t === "number" && EXS.indexOf(e.ex) > -1 && typeof e.msg !== "string";
 });
-return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, log: items };
+return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, log: items, cheers: Object.keys(l).sort().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){ return e && typeof e.msg === "string" && typeof e.to === "string" && typeof e.name === "string" && typeof e.t === "number"; }).map(function(e){ return { id: e.id, to: e.to, from: e.name, msg: e.msg, t: e.t }; }) };
 });
 }
 function bump(e, key, n, mk){ return put("/counts/" + (mk || monthKey()) + "/" + e + "/" + encodeURIComponent(key), {".sv":{"increment":n}}); }
@@ -675,11 +676,11 @@ li.appendChild(w); li.appendChild(b); list.appendChild(li);
 box.appendChild(list); return box;
 }
 function renderSheet(){
-if(!sheetName || $("sheet").hidden) return;
+if(!sheetName || $("sheet").hidden) return; if(cheerOpen && document.activeElement && document.activeElement.id === "cheerTxt") return;
 var b = $("sheetBody"); b.innerHTML = "";
 var k = sheetName;
 if(personOut(k)) b.appendChild(el("p", "note", "Marked out. Not counted toward the team goal."));
-b.appendChild(buildPlan(k));
+b.appendChild(buildPlan(k)); if(me && k !== me) b.appendChild(buildCheer(k));
 var a = el("div", "actions");
 if(personOut(k)){
 a.appendChild(btn("add solid", "Bring back", function(){ sheetConfirm = ""; setPersonOut(k, false); }));
@@ -704,7 +705,7 @@ $("month").textContent = d.toLocaleString(undefined, {month:"long", year:"numeri
 $("left").textContent = C.left + (C.left === 1 ? " day left" : " days left");
 document.querySelectorAll("#seg button").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-ex") === ex ? "true" : "false"); });
 $("seg").hidden = (tab !== "add");
-renderAdd(); renderTeam(); renderMe(); renderSheet();
+renderAdd(); renderCheerBox(); renderTeam(); renderMe(); renderSheet();
 }
 function celebrate(){
 var T = team(); if(!T.people) return;
@@ -717,7 +718,7 @@ else if(lvl < seen){ store.set(key, String(lvl)); }
 function refresh(){
 if(busy){ again = true; return; }
 busy = true;
-fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; render(); celebrate(); setStatus("live"); })
+fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; cheersAll = r.cheers || []; render(); celebrate(); newCheers(); setStatus("live"); })
 .catch(function(){ setStatus("off"); })
 .then(function(){ busy = false; if(again){ again = false; refresh(); } });
 }
@@ -742,6 +743,34 @@ function confetti(big){
 var box = el("div", "confetti"), cols = ["#7C93FF","#A78BFA","#60A5FA","#C084FC","#4ADE9A","#818CF8"], N = big ? 90 : 45;
 for(var i = 0; i < N; i++){ var p = el("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDuration = (1.8 + Math.random() * 1.8) + "s"; p.style.animationDelay = (Math.random() * 0.5) + "s"; p.style.transform = "rotate(" + Math.random() * 360 + "deg)"; box.appendChild(p); }
 document.body.appendChild(box); setTimeout(function(){ box.remove(); }, 4500);
+}
+var cheerOpen = false, cheerText = "", lastCheerT = 0;
+var QUICK = ["You've got this","Proud of you","Keep going","Let's go","Almost there","Beast mode"];
+function cheerKey(){ return "pu_cheer_seen_" + monthKey(); }
+function myFresh(){ var seen = parseInt(store.get(cheerKey()) || "0", 10) || 0; return cheersAll.filter(function(c){ return c.to === me && c.t > seen; }); }
+function newCheers(){ if(!me) return; var f = myFresh(); if(!f.length) return; var l = f[f.length - 1]; if(l.t > lastCheerT){ lastCheerT = l.t; if(Date.now() - l.t < 90000){ toast(l.from + " cheers you on: " + l.msg, false); confetti(false); } } }
+function renderCheerBox(){
+var box = $("cheerBox"); if(!box) return; box.innerHTML = "";
+var f = me ? myFresh().slice(-3).reverse() : [];
+if(f.length){ var card = el("section", "card"); card.appendChild(el("div", "label", "Cheers for you")); f.forEach(function(c){ var p = el("p", "msg"); p.appendChild(el("b", "", c.from)); p.appendChild(document.createTextNode(": " + c.msg)); card.appendChild(p); }); card.appendChild(btn("add", "Got it", function(){ var mx = 0; cheersAll.forEach(function(c){ if(c.to === me && c.t > mx) mx = c.t; }); store.set(cheerKey(), String(mx)); render(); })); box.appendChild(card); }
+var cl = $("cheerLabel"), cf = $("cheerFeed");
+if(cf){ cf.innerHTML = ""; var recent = cheersAll.slice(-5).reverse(); cl.hidden = !recent.length; recent.forEach(function(c){ var li = el("li"), w = el("span", "what"); w.appendChild(el("b", "", c.from)); w.appendChild(document.createTextNode(" to ")); w.appendChild(el("b", "", c.to)); w.appendChild(document.createTextNode(": " + c.msg)); li.appendChild(w); li.appendChild(el("span", "ago", ago(c.t))); cf.appendChild(li); }); }
+}
+function sendCheer(to, msg){
+msg = (msg || "").replace(/\s+/g, " ").trim().slice(0, 100);
+if(!msg){ toast("Write a short message first.", false); return; }
+var c = { to: to, from: me, msg: msg, t: Date.now() };
+cheersAll.push(c); cheerOpen = false; cheerText = ""; render();
+fetch(DB + "/log/" + monthKey() + ".json", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ n: 1, name: me, ex: "pushups", t: c.t, to: to, msg: msg }) }).then(okOrThrow).then(function(){ toast("Cheer sent to " + to + "!", false); confetti(false); refresh(); }).catch(function(){ var i = cheersAll.indexOf(c); if(i > -1) cheersAll.splice(i, 1); render(); toast("Couldn't send. Check your connection.", false); });
+}
+function buildCheer(k){
+var w = el("div", "cheerbox");
+if(!cheerOpen){ w.appendChild(btn("add solid", "Send " + k + " a cheer", function(){ cheerOpen = true; renderSheet(); var t = $("cheerTxt"); if(t) t.focus(); })); return w; }
+w.appendChild(el("div", "label", "Cheer " + k + " on"));
+var chips = el("div", "chips"); QUICK.forEach(function(q){ chips.appendChild(btn("chip", q, function(){ cheerText = q; renderSheet(); })); }); w.appendChild(chips);
+var ta = el("textarea"); ta.id = "cheerTxt"; ta.maxLength = 100; ta.placeholder = "Write a short message"; ta.value = cheerText; ta.setAttribute("aria-label", "Message"); ta.addEventListener("input", function(){ cheerText = ta.value; }); w.appendChild(ta);
+w.appendChild(btn("add solid", "Send cheer", function(){ sendCheer(k, cheerText); }));
+return w;
 }
 function cheer(n, unit){ var tier = n >= 100 ? "ABSOLUTE LEGEND" : n >= 50 ? "BEAST MODE" : n >= 30 ? "Big set, big respect" : CHEERS[Math.floor(Math.random() * CHEERS.length)]; var msg = "+" + n + " " + unit + ". " + tier + "!"; if(pCounted(me) >= pGoal(me)) msg = "+" + n + " " + unit + ". You hit your goal! 🎉"; else if(n >= 50) msg += " 🔥"; return msg; }
 function add(n){
@@ -788,8 +817,8 @@ try{ history.replaceState(null, "", "#" + t); }catch(e){}
 window.scrollTo(0, 0);
 if(t === "team") fitTotal();
 }
-function openSheet(name){ sheetName = name; sheetConfirm = ""; $("sheet").hidden = false; renderSheet(); $("sheetClose").focus(); }
-function closeSheet(){ sheetName = ""; sheetConfirm = ""; $("sheet").hidden = true; }
+function openSheet(name){ sheetName = name; sheetConfirm = ""; cheerOpen = false; cheerText = ""; $("sheet").hidden = false; renderSheet(); $("sheetClose").focus(); }
+function closeSheet(){ sheetName = ""; sheetConfirm = ""; cheerOpen = false; cheerText = ""; $("sheet").hidden = true; }
 document.querySelectorAll(".tabs button").forEach(function(b){
 b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); });
 });
