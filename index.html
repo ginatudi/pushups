@@ -558,15 +558,15 @@ var card = el("section", "card");
 var who = el("div", "who"), sp = el("span", "", "Adding as "); sp.appendChild(el("b", "", me)); who.appendChild(sp);
 who.appendChild(btn("link", "Change", function(){ changingName = true; render(); }));
 card.appendChild(who);
-var tb = el("div", "todaybox"); tb.setAttribute("aria-live", "polite");
-tb.appendChild(el("div", "label", "Today · all your reps"));
-var row = el("div", "todayrow"), num = el("div", "todaynum", fmt(P.d));
-if(P.done){ row.appendChild(num); row.appendChild(el("div", "todaymsg", "Goal complete. Bonus reps now.")); }
-else { num.appendChild(el("small", "", " / " + fmt(P.need))); row.appendChild(num); row.appendChild(el("div", "todaymsg", P.toGo > 0 ? fmt(P.toGo) + " to go today" : "Done for today")); }
+var Q = P, both = memberEx(me).length > 1; if(both){ var g1 = G(ex), c1 = Math.min(cnt(me, ex), g1), dl = new Date().toDateString(), t1 = 0; logAll.forEach(function(x){ if(x.name === me && x.ex === ex && new Date(x.t).toDateString() === dl) t1 += x.n; }); var d1 = Math.min(c1, t1), R1 = Math.max(0, g1 - (c1 - d1)), n1 = R1 > 0 ? Math.ceil(R1 / calendar().left) : 0; Q = {d: d1, need: n1, toGo: Math.max(0, n1 - d1), done: c1 >= g1}; } var tb = el("div", "todaybox"); tb.setAttribute("aria-live", "polite");
+tb.appendChild(el("div", "label", both ? "Today · " + LABEL[ex] : "Today · all your reps"));
+var row = el("div", "todayrow"), num = el("div", "todaynum", fmt(Q.d));
+if(Q.done){ row.appendChild(num); row.appendChild(el("div", "todaymsg", "Goal complete. Bonus reps now.")); }
+else { num.appendChild(el("small", "", " / " + fmt(Q.need))); row.appendChild(num); row.appendChild(el("div", "todaymsg", Q.toGo > 0 ? fmt(Q.toGo) + " to go today" : "Done for today")); }
 tb.appendChild(row);
-var tr = el("div", "track"), fl = el("div", "fill"); fl.style.width = (P.done ? 100 : Math.min(100, P.need ? P.d / P.need * 100 : 100)) + "%"; tr.appendChild(fl); tb.appendChild(tr);
+var tr = el("div", "track"), fl = el("div", "fill"); fl.style.width = (Q.done ? 100 : Math.min(100, Q.need ? Q.d / Q.need * 100 : 100)) + "%"; tr.appendChild(fl); tb.appendChild(tr);
 card.appendChild(tb);
-card.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), P.msg));
+card.appendChild(el("p", "msg " + (P.done || P.diff >= 0 ? "ahead" : "behind"), both ? (Q.done ? LABEL[ex] + " goal complete." : Q.toGo > 0 ? fmt(Q.toGo) + " more " + LABEL[ex].toLowerCase() + " keeps you on track today." : "Today's " + LABEL[ex].toLowerCase() + " target is done.") : P.msg));
 var sk = streak(me); if(sk >= 2) card.appendChild(el("div", "streak", sk + "-day streak. Keep it going!"));
 card.appendChild(el("div", "label", "Logging " + LABEL[ex]));
 var quick = el("div", "quick");
