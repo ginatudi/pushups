@@ -164,9 +164,9 @@ getJSON(DB + "/log/" + mk + '.json?orderBy=%22%24key%22&limitToLast=400').catch(
 ]).then(function(a){
 var c = a[0] || {}, r = a[1] || {}, l = a[2] || {};
 var items = Object.keys(l).sort().reverse().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){
-return e && typeof e.n === "number" && typeof e.name === "string" && EXS.indexOf(e.ex) > -1;
+return e && typeof e.n === "number" && typeof e.name === "string" && EXS.indexOf(e.ex) > -1 && typeof e.msg !== "string";
 });
-return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, feed: items };
+return { counts: { pushups: c.pushups || {}, situps: c.situps || {} }, roster: { pushups: r.pushups || {}, situps: r.situps || {} }, feed: items, cheers: Object.keys(l).sort().map(function(k){ var e = l[k]; if(e) e.id = k; return e; }).filter(function(e){ return e && typeof e.msg === "string" && typeof e.to === "string" && typeof e.name === "string" && typeof e.t === "number"; }).map(function(e){ return { id: e.id, to: e.to, from: e.name, msg: e.msg, t: e.t }; }) };
 });
 }
 function confetti(big){
@@ -174,7 +174,7 @@ var box = document.createElement("div"); box.className = "confetti"; var cols = 
 for(var i = 0; i < N; i++){ var p = document.createElement("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDuration = (2 + Math.random() * 2) + "s"; p.style.animationDelay = (Math.random() * 0.8) + "s"; p.style.transform = "rotate(" + Math.random() * 360 + "deg)"; box.appendChild(p); }
 document.body.appendChild(box); setTimeout(function(){ box.remove(); }, 6000);
 }
-var prevDone = null;
+var prevDone = null, seenCheer = null;
 function doneCheck(){
 var set = {}; allNames().filter(function(k){ return !isOutP(k); }).forEach(function(k){ if(pGoal(k) > 0 && pCounted(k) >= pGoal(k)) set[k] = 1; });
 if(prevDone){ Object.keys(set).forEach(function(k){ if(!prevDone[k]){ bigPop(k + " hit the goal!", "Another one at 100%. Who is next?"); confetti(true); } }); }
@@ -274,7 +274,7 @@ function refresh(){
 if(busy){ again = true; return; }
 busy = true;
 fetchAll().then(function(r){
-counts = r.counts; roster = r.roster; feed = r.feed;
+counts = r.counts; roster = r.roster; feed = r.feed; var cl = r.cheers || [], cn = cl[cl.length - 1]; if(cn && cn.id !== seenCheer){ if(!firstLoad && (Date.now() - cn.t) < 120000){ bigPop(cn.from + " cheers " + cn.to + " on", "\u201c" + cn.msg + "\u201d"); confetti(false); } seenCheer = cn.id; }
 var newest = feed[0];
 if(newest && newest.id !== seenId){
 if(!firstLoad && (Date.now() - (newest.t || 0)) < 120000) popFor(newest);
