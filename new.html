@@ -917,7 +917,7 @@ svg+="</svg>";card.innerHTML='<div class="uh"><span>★ Reps by day</span><b id=
 var mn=d.toLocaleString("en-US",{month:"short"});
 var bars=[].slice.call(card.querySelectorAll(".ub"));var play=vis&&!RM;var aud=vis&&dingOn&&ctx();
 bars.forEach(function(r,i){var v=+r.getAttribute("data-v"),an=null;if(play){r.style.transformBox="fill-box";r.style.transformOrigin="bottom";an=r.animate([{transform:"scaleY(0)"},{transform:"scaleY(1)"}],{duration:1000,delay:i*95,easing:"cubic-bezier(.25,.6,.3,1)",fill:"backwards"});}
-if(aud&&play&&an)follow(an,[0.12],function(){tone(fq(52+Math.round(i/dim*14)+Math.round(v/mx*6)),AC.currentTime,0.16,"sine",0.012+0.03*i/dim,master,0.035);});
+if(aud&&play&&an&&v>0)follow(an,[0.12],function(){var fr=Math.sqrt(v/mx);tone(fq(46+Math.round(fr*34)),AC.currentTime,0.1+0.3*fr,"sine",0.01+0.05*fr,master,0.03);});
 r.addEventListener("click",function(){document.getElementById("uread").textContent=mn+" "+r.getAttribute("data-d")+": "+v.toLocaleString("en-US")+" reps";if(dingOn&&ctx())soft(AC.currentTime,500+Math.round(v/mx*500),0.07);});});}
 setTimeout(chart,800);
 var nvEl=document.createElement("div");nvEl.className="usa-nv";document.body.appendChild(nvEl);
