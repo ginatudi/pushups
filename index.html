@@ -630,6 +630,7 @@ var li = el("li"), w = el("span", "what"); w.appendChild(el("b", "", x.name)); w
 li.appendChild(w); li.appendChild(el("span", "ago", ago(x.t))); f.appendChild(li);
 });
 }
+var pcMode = store.get("pu_pcmode") === "mtd" ? "mtd" : "month";
 function personRow(k, rank, isOutRow){
 var g = pGoal(k), c = pCounted(k), raw = pRaw(k);
 var li = el("li", "row" + (k === me ? " me" : "") + (isOutRow ? " outrow" : ""));
@@ -637,7 +638,10 @@ li.setAttribute("role", "button"); li.tabIndex = 0;
 li.setAttribute("aria-label", k + ", " + raw + " reps. Open plan.");
 li.appendChild(el("span", "rank", String(rank)));
 var nm = el("span", "nm", k); nm.appendChild(el("span", "tag", exTag(k))); li.appendChild(nm);
-li.appendChild(el("span", "pc" + (c >= g ? " atgoal" : (!isOutRow && isBehind(k) ? " behind" : "")), isOutRow ? "out" : Math.floor(c / g * 100) + "%"));
+var C0 = calendar(), pcs = el("span", "pc" + (c >= g ? " atgoal" : (!isOutRow && isBehind(k) ? " behind" : "")), isOutRow ? "out" : (pcMode === "mtd" ? Math.floor(c / (g * C0.day / C0.dim) * 100) : Math.floor(c / g * 100)) + "%");
+if(!isOutRow){ pcs.style.cursor = "pointer"; pcs.style.textDecoration = "underline dotted"; pcs.style.padding = "8px 0 8px 6px"; pcs.addEventListener("click", function(e){ e.stopPropagation(); pcMode = pcMode === "mtd" ? "month" : "mtd"; store.set("pu_pcmode", pcMode); renderTeam(); }); }
+li.appendChild(pcs);
+var bh = $("boardHint"); if(bh) bh.textContent = "Tap a name for details. Tap a % to switch: now showing " + (pcMode === "mtd" ? "% of month-to-date target." : "% of the full month goal.");
 li.appendChild(el("span", "ct", fmt(raw)));
 if(memberEx(k).length > 1) li.appendChild(el("div", "split", "Push-ups " + fmt(cnt(k, "pushups")) + " · Sit-ups " + fmt(cnt(k, "situps"))));
 var bar = el("div", "bar"), inner = el("i"); inner.style.width = Math.min(100, c / g * 100) + "%"; bar.appendChild(inner); if(!isOutRow){ var tk = el("b", "tick"); tk.style.left = (expectedPct() * 100) + "%"; bar.appendChild(tk); } li.appendChild(bar);
