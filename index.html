@@ -771,7 +771,7 @@ fetch(DB + "/log/" + monthKey() + ".json", { method:"POST", headers:{"Content-Ty
 function buildCheerHistory(k){
 var w = el("div", "cheerhist"), seen = {};
 var all = cheersAll.filter(function(c){ var key = c.from + "|" + c.to + "|" + c.msg; if(seen[key] && c.t - seen[key] < 600000) return false; seen[key] = c.t; return true; });
-function list(title, arr, who){ if(!arr.length) return; var h = el("div", "label", title + " (" + arr.length + ")"); h.style.marginTop = "14px"; w.appendChild(h); var ul = el("ul", "feed"); arr.slice(-6).reverse().forEach(function(c){ var li = el("li"), sp = el("span", "what"); sp.appendChild(el("b", "", c[who])); sp.appendChild(document.createTextNode(": " + c.msg)); li.appendChild(sp); ul.appendChild(li); }); w.appendChild(ul); }
+function list(title, arr, who){ if(!arr.length) return; var h = el("div", "label", title + " (" + arr.length + ")"); h.style.marginTop = "14px"; w.appendChild(h); var ul = el("ul", "feed"); ul.style.maxHeight = "220px"; ul.style.overflowY = "auto"; ul.style.webkitOverflowScrolling = "touch"; arr.slice().reverse().forEach(function(c){ var li = el("li"), sp = el("span", "what"); sp.appendChild(el("b", "", c[who])); sp.appendChild(document.createTextNode(": " + c.msg)); li.appendChild(sp); ul.appendChild(li); }); w.appendChild(ul); }
 list("Cheers received", all.filter(function(c){ return c.to === k; }), "from");
 list("Cheers sent", all.filter(function(c){ return c.from === k; }), "to");
 return w;
