@@ -723,7 +723,7 @@ else if(lvl < seen){ store.set(key, String(lvl)); }
 function refresh(){
 if(busy){ again = true; return; }
 busy = true;
-fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; cheersAll = r.cheers || []; render(); celebrate(); newCheers(); setStatus("live"); })
+fetchAll().then(function(r){ counts = r.counts; roster = r.roster; logAll = r.log; cheersAll = (r.cheers || []).filter(function(c){ return !(c.from === "Gina" && ["Wingman, keep climbing. We've got your six.", "Stay in the fight. We've got your six.", "You can do this! Keep going."].indexOf(c.msg) > -1); }); render(); celebrate(); newCheers(); setStatus("live"); })
 .catch(function(){ setStatus("off"); })
 .then(function(){ busy = false; if(again){ again = false; refresh(); } });
 }
