@@ -685,7 +685,7 @@ if(!sheetName || $("sheet").hidden) return; if(cheerOpen && document.activeEleme
 var b = $("sheetBody"); b.innerHTML = "";
 var k = sheetName;
 if(personOut(k)) b.appendChild(el("p", "note", "Marked out. Not counted toward the team goal."));
-b.appendChild(buildPlan(k)); if(me && k !== me) b.appendChild(buildCheer(k));
+b.appendChild(buildPlan(k)); if(me && k !== me) b.appendChild(buildCheer(k)); b.appendChild(buildCheerHistory(k));
 var a = el("div", "actions");
 if(personOut(k)){
 a.appendChild(btn("add solid", "Bring back", function(){ sheetConfirm = ""; setPersonOut(k, false); }));
@@ -767,6 +767,14 @@ if(!msg){ toast("Write a short message first.", false); return; }
 var c = { to: to, from: me, msg: msg, t: Date.now() };
 cheersAll.push(c); cheerOpen = false; cheerText = ""; render();
 fetch(DB + "/log/" + monthKey() + ".json", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ n: 1, name: me, ex: "pushups", t: c.t, to: to, msg: msg }) }).then(okOrThrow).then(function(){ toast("Cheer sent to " + to + "!", false); confetti(false); refresh(); }).catch(function(){ var i = cheersAll.indexOf(c); if(i > -1) cheersAll.splice(i, 1); render(); toast("Couldn't send. Check your connection.", false); });
+}
+function buildCheerHistory(k){
+var w = el("div", "cheerhist"), seen = {};
+var all = cheersAll.filter(function(c){ var key = c.from + "|" + c.to + "|" + c.msg; if(seen[key] && c.t - seen[key] < 600000) return false; seen[key] = c.t; return true; });
+function list(title, arr, who){ if(!arr.length) return; var h = el("div", "label", title + " (" + arr.length + ")"); h.style.marginTop = "14px"; w.appendChild(h); var ul = el("ul", "feed"); arr.slice(-6).reverse().forEach(function(c){ var li = el("li"), sp = el("span", "what"); sp.appendChild(el("b", "", c[who])); sp.appendChild(document.createTextNode(": " + c.msg)); li.appendChild(sp); ul.appendChild(li); }); w.appendChild(ul); }
+list("Cheers received", all.filter(function(c){ return c.to === k; }), "from");
+list("Cheers sent", all.filter(function(c){ return c.from === k; }), "to");
+return w;
 }
 function buildCheer(k){
 var w = el("div", "cheerbox");
