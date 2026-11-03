@@ -898,8 +898,8 @@ for(var i=1;i<=dim;i++){var h=Math.max(days[i]?3:1.5,days[i]/mx*H),fill=i===toda
 svg+="</svg>";card.innerHTML='<div class="uh"><span>★ Reps by day</span><b id="uread">Tap a bar</b></div>'+svg;
 var mn=d.toLocaleString("en-US",{month:"short"});
 var bars=[].slice.call(card.querySelectorAll(".ub"));var play=vis&&!RM;var aud=vis&&dingOn&&ctx();
-bars.forEach(function(r,i){var v=+r.getAttribute("data-v");if(play){r.style.transformBox="fill-box";r.style.transformOrigin="bottom";r.animate([{transform:"scaleY(0)"},{transform:"scaleY(1)"}],{duration:450,delay:i*40,easing:"cubic-bezier(.2,.8,.2,1)",fill:"backwards"});}
-if(aud&&play)soft(AC.currentTime+0.17+i*0.04,500+Math.round(v/mx*500),0.035);
+bars.forEach(function(r,i){var v=+r.getAttribute("data-v");if(play){r.style.transformBox="fill-box";r.style.transformOrigin="bottom";r.animate([{transform:"scaleY(0)"},{transform:"scaleY(1)"}],{duration:1000,delay:i*95,easing:"cubic-bezier(.25,.6,.3,1)",fill:"backwards"});}
+if(aud&&play)tone(fq(52+Math.round(i/dim*14)+Math.round(v/mx*6)),AC.currentTime+0.25+i*0.095,0.16,"sine",0.012+0.03*i/dim,master,0.035);
 r.addEventListener("click",function(){document.getElementById("uread").textContent=mn+" "+r.getAttribute("data-d")+": "+v.toLocaleString("en-US")+" reps";if(dingOn&&ctx())soft(AC.currentTime,500+Math.round(v/mx*500),0.07);});});}
 setTimeout(chart,800);
 document.body.classList.add("usa");
