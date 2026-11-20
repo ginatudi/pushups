@@ -255,6 +255,7 @@ button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-vis
 <div class="card help">
 <h2>Adding the other exercise later</h2>
 <p>Switch to it at the top of the Add tab and tap Join. Your goal goes up by 2,000.</p>
+<p>To drop one, tap Opt out at the bottom of the Add tab. Your goal goes down by 2,000 and your logged reps are kept.</p>
     </div>
     <div class="card help">
       <h2>Cheer someone on</h2>
@@ -321,7 +322,7 @@ set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
 var counts = { pushups:{}, situps:{} }, roster = { pushups:{}, situps:{} }, logAll = [], cheersAll = [];
 var me = store.get("pu_name") || "", ex = store.get("pu_ex"), last = null, toastTimer = null, busy = false, again = false;
-var tab = "add", sheetName = "", sheetConfirm = "", changingName = false;
+var tab = "add", sheetName = "", sheetConfirm = "", changingName = false; var dropArm = "";
 if(EXS.indexOf(ex) < 0) ex = "pushups";
 var reps = parseInt(store.get("pu_reps"), 10); if(!(reps > 0 && reps <= 1000)) reps = 15;
 var draft = { name:"", pushups:false, situps:false };
@@ -411,6 +412,13 @@ roster[e] = roster[e] || {}; roster[e][name] = { out: out }; render();
 return put("/roster/" + e + "/" + encodeURIComponent(name), { out: out }).catch(function(){ toast("Couldn't save. Check your connection.", false); refresh(); });
 }
 function setPersonOut(name, out){ memberEx(name).forEach(function(e){ setRoster(e, name, out); }); }
+function dropEx(name, e){
+if(memberEx(name).length < 2 || !isMember(name, e)) return Promise.resolve();
+if(roster[e]) delete roster[e][name];
+render();
+return fetch(DB + "/roster/" + e + "/" + encodeURIComponent(name) + ".json", { method:"DELETE" }).then(okOrThrow)
+.catch(function(){ toast("Couldn't save. Check your connection.", false); refresh(); });
+}
 function dropPerson(name){
 var m = memberEx(name);
 m.forEach(function(e){ if(roster[e]) delete roster[e][name]; });
@@ -593,6 +601,7 @@ cu.appendChild(st);
 var ab = btn("add", "Add " + reps, function(){ setReps(ci.value); add(reps); }); ab.id = "addCustom"; cu.appendChild(ab);
 card.appendChild(cu);
 body.appendChild(card); body.appendChild(btn("link", "Added too many? Fix a mistake", function(){ setTab("me"); }));
+if(both){ var da = dropArm === ex; body.appendChild(btn("link", da ? "Tap again to opt out of " + LABEL[ex] : "Opt out of " + LABEL[ex], function(){ if(dropArm === ex){ dropArm = ""; dropEx(me, ex); } else { dropArm = ex; renderAdd(); } })); if(da) body.appendChild(el("p", "muted", "Your " + LABEL[ex].toLowerCase() + " goal comes off yours and the team goal. Your logged reps are kept, and you can rejoin any time.")); }
 }
 function renderTeam(){
 var C = calendar(), T = team();
@@ -704,6 +713,7 @@ if(sheetConfirm === "out"){ sheetConfirm = ""; setPersonOut(k, true); } else { s
 }));
 if(armed) a.appendChild(el("p", "hint", "They stop counting toward the team goal, and the goal drops by their share."));
 }
+if(!personOut(k) && memberEx(k).length > 1) memberEx(k).forEach(function(e){ var key = "drop-" + e, arm = sheetConfirm === key; a.appendChild(btn("danger" + (arm ? " armed" : ""), arm ? "Tap again to drop " + LABEL[e] : "Drop " + LABEL[e] + " only", function(){ if(sheetConfirm === key){ sheetConfirm = ""; dropEx(k, e); } else { sheetConfirm = key; renderSheet(); } })); if(arm) a.appendChild(el("p", "hint", LABEL[e] + " comes off their goal and the team goal. Their logged reps are kept.")); });
 if(pRaw(k) === 0){
 var ra = sheetConfirm === "remove";
 a.appendChild(btn("danger" + (ra ? " armed" : ""), ra ? "Tap again to remove" : "Remove this name", function(){
