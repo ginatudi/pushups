@@ -628,7 +628,7 @@ var behind = T.names.filter(isBehind);
 $("nudge").textContent = behind.length ? behind.slice(0, 3).join(", ") + (behind.length > 3 ? " and " + (behind.length - 3) + " more" : "") + " could use a cheer. The team is strongest when everyone is on pace." : "Everyone is on pace. Keep it up!";
 }
 var b = $("board"); b.innerHTML = "";
-var names = T.names.slice().sort(function(a,b2){ return pCounted(b2) - pCounted(a) || pRaw(b2) - pRaw(a) || a.localeCompare(b2); });
+var names = T.names.slice().sort(function(a,b2){ return pRaw(b2) - pRaw(a) || pCounted(b2) - pCounted(a) || a.localeCompare(b2); });
 $("boardHint").hidden = !names.length;
 if(!names.length) b.appendChild(el("li", "empty", "No one yet. Add your name on the Add tab."));
 names.forEach(function(k, i){ b.appendChild(personRow(k, i + 1, false)); });
