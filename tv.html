@@ -230,7 +230,7 @@ var bh = names.filter(function(k){ return isB(k, C); });
 $("nudge").textContent = bh.length ? "Cheer on " + bh.slice(0, 3).join(", ") + (bh.length > 3 ? " and " + (bh.length - 3) + " more" : "") + ". The team is strongest when everyone is on pace." : "Everyone is on pace. Keep it up!";
 }
 var b = $("board"); b.innerHTML = "";
-var sorted = names.slice().sort(function(a, z){ return pCounted(z) - pCounted(a) || pRaw(z) - pRaw(a) || a.localeCompare(z); });
+var sorted = names.slice().sort(function(a, z){ return pRaw(z) - pRaw(a) || pCounted(z) - pCounted(a) || a.localeCompare(z); });
 sorted.slice(0, CONFIG.ROWS).forEach(function(k, i){
 var g = pGoal(k), c = pCounted(k), li = document.createElement("li"); li.className = "row";
 var r = document.createElement("span"); r.className = "rank"; r.textContent = i + 1;
